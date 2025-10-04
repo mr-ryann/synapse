@@ -1,5 +1,14 @@
 {
+  "name": "synapse",
+  "version": "1.0.0",
+  "description": "Synapse - Critical Thinking App",
+  "scripts": {
+    "ios": "cd app && npm run ios",
+    "android": "cd app && npm run android",
+    "start": "cd app && npm start"
+  },
   "dependencies": {
     "react-native-svg": "^15.13.0"
-  }
+  },
+  "private": true
 }
