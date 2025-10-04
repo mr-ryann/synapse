@@ -173,6 +173,24 @@
             "commands": "pip install -r requirements.txt",
             "specification": "s-0.5vcpu-512mb",
             "path": "functions/manage-topics"
+        },
+        {
+            "$id": "record-question-view",
+            "execute": [
+                "any"
+            ],
+            "name": "record-question-view",
+            "enabled": true,
+            "logging": true,
+            "runtime": "python-3.12",
+            "scopes": [],
+            "events": [],
+            "schedule": "",
+            "timeout": 15,
+            "entrypoint": "src/main.py",
+            "commands": "pip install -r requirements.txt",
+            "specification": "s-0.5vcpu-512mb",
+            "path": "functions/record-question-view"
         }
     ],
     "tablesDB": [

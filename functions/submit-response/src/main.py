@@ -1,5 +1,6 @@
 from appwrite.client import Client
 from appwrite.services.databases import Databases
+from appwrite.query import Query
 from appwrite.exception import AppwriteException
 import json
 import os
@@ -44,6 +45,35 @@ def main(context):
         )
 
         context.log(f"Created response {response_doc['$id']} for user {user_id}")
+
+        # Link response to challenge history
+        try:
+            # Find the history record for this user and question
+            history_records = databases.list_documents(
+                'synapse',
+                'user_challenge_history',
+                queries=[
+                    Query.equal('userId', user_id),
+                    Query.equal('questionId', question_id)
+                ]
+            )
+            
+            if history_records['documents']:
+                # Update the most recent history record with the responseId
+                history_doc = history_records['documents'][0]
+                databases.update_document(
+                    'synapse',
+                    'user_challenge_history',
+                    history_doc['$id'],
+                    {'responseId': response_doc['$id']}
+                )
+                context.log(f"Linked response {response_doc['$id']} to history {history_doc['$id']}")
+            else:
+                context.log(f"No history record found for user {user_id} and question {question_id}")
+        except Exception as link_err:
+            # Don't fail the response submission if history linking fails
+            context.error(f"Failed to link history: {repr(link_err)}")
+
         return context.res.json({"success": True, "responseId": response_doc['$id']})
 
     except AppwriteException as err:

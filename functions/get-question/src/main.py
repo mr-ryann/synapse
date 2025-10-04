@@ -29,6 +29,15 @@ def main(context):
         if not selected_topics:
             return context.res.json({"success": False, "error": "User has no selected topics"}, 400)
 
+        # Get user's question history to filter out already-seen questions
+        history = databases.list_documents(
+            'synapse',
+            'user_challenge_history',
+            queries=[Query.equal('userId', user_id)]
+        )
+        seen_question_ids = [doc['questionId'] for doc in history['documents']]
+        context.log(f"User {user_id} has seen {len(seen_question_ids)} questions")
+
         # Query questions matching selected topics
         questions = databases.list_documents(
             'synapse',
@@ -39,8 +48,18 @@ def main(context):
         if not questions['documents']:
             return context.res.json({"success": False, "error": "No questions found for selected topics"}, 404)
 
-        # Select random question
-        random_question = random.choice(questions['documents'])
+        # Filter out already-seen questions
+        unseen_questions = [q for q in questions['documents'] if q['$id'] not in seen_question_ids]
+        
+        if not unseen_questions:
+            return context.res.json({
+                "success": False, 
+                "error": "No more unseen questions available",
+                "code": "NO_MORE_QUESTIONS"
+            }, 404)
+
+        # Select random unseen question
+        random_question = random.choice(unseen_questions)
 
         context.log(f"Returned question {random_question['$id']} for user {user_id}")
         return context.res.json({"success": True, "question": random_question})
