@@ -1,39 +1,31 @@
 from appwrite.client import Client
-from appwrite.services.users import Users
 from appwrite.exception import AppwriteException
+import google.generativeai as genai
+import json
 import os
 
-# This Appwrite function will be executed every time your function is triggered
 def main(context):
-    # You can use the Appwrite SDK to interact with other services
-    # For this example, we're using the Users service
-    client = (
-        Client()
-        .set_endpoint(os.environ["APPWRITE_FUNCTION_API_ENDPOINT"])
-        .set_project(os.environ["APPWRITE_FUNCTION_PROJECT_ID"])
-        .set_key(context.req.headers["x-appwrite-key"])
-    )
-    users = Users(client)
-
     try:
-        response = users.list()
-        # Log messages and errors to the Appwrite Console
-        # These logs won't be seen by your end users
-        context.log("Total users: " + str(response["total"]))
-    except AppwriteException as err:
-        context.error("Could not list users: " + repr(err))
+        # Get questionText from request body
+        data = json.loads(context.req.body)
+        question_text = data.get('questionText')
+        if not question_text:
+            return context.res.json({"success": False, "error": "questionText is required"}, 400)
 
-    # The req object contains the request data
-    if context.req.path == "/ping":
-        # Use res object to respond with text(), json(), or binary()
-        # Don't forget to return a response!
-        return context.res.text("Pong")
+        # Configure Gemini API
+        genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+        model = genai.GenerativeModel('gemini-1.5-flash')
 
-    return context.res.json(
-        {
-            "motto": "Build like a team of hundreds_",
-            "learn": "https://appwrite.io/docs",
-            "connect": "https://appwrite.io/discord",
-            "getInspired": "https://builtwith.appwrite.io",
-        }
-    )
+        # Create prompt for hint generation
+        prompt = f"""You are a tool for sparking critical thinking. Based on this question: '{question_text}', provide a brief hint (2-3 sentences) that encourages deeper reflection without giving away the answer. Focus on guiding the user to think more profoundly about the topic."""
+
+        # Generate hint
+        response = model.generate_content(prompt)
+        hint = response.text.strip()
+
+        context.log(f"Generated hint for question: {question_text[:50]}...")
+        return context.res.json({"success": True, "hint": hint})
+
+    except Exception as err:
+        context.error(f"Error generating hint: {repr(err)}")
+        return context.res.json({"success": False, "error": str(err)}, 500)
