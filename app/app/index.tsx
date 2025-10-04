@@ -1,129 +1,43 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, Button, Alert } from 'react-native';
-import { useState } from 'react';
-import { account, databases, functions } from '../lib/appwrite';
+import { useState, useEffect } from 'react';
+import { View, Text, Button } from 'react-native';
+import { account } from '../lib/appwrite';
+import { useRouter } from 'expo-router';
 
-export default function App() {
+export default function Home() {
   const [user, setUser] = useState<any>(null);
-  const [topics, setTopics] = useState<any[]>([]);
-  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
-  const [currentQuestion, setCurrentQuestion] = useState<any>(null);
-  const [response, setResponse] = useState('');
+  const router = useRouter();
 
-  const login = async () => {
-    try {
-      // For testing, create anonymous session or email login
-      // Assume email login with test@test.com / password
-      await account.createEmailPasswordSession('test@test.com', 'password');
-      const userData = await account.get();
-      setUser(userData);
-      Alert.alert('Logged in', `Welcome ${userData.name}`);
-    } catch (e) {
-      Alert.alert('Error', (e as Error).message);
-    }
-  };
-
-  const getTopics = async () => {
-    try {
-      const res = await databases.listDocuments('synapse', 'topics');
-      setTopics(res.documents);
-    } catch (e) {
-      Alert.alert('Error', (e as Error).message);
-    }
-  };
-
-  const selectTopic = async (topicId: string) => {
-    // Update user selectedTopics
-    const newSelected = [...selectedTopics, topicId];
-    setSelectedTopics(newSelected);
-    try {
-      await databases.updateDocument('synapse', 'users', user.$id, {
-        selectedTopics: newSelected
-      });
-    } catch (e) {
-      Alert.alert('Error', (e as Error).message);
-    }
-  };
-
-  const getQuestion = async () => {
-    try {
-      const res = await functions.createExecution('get-question', JSON.stringify({ userId: user.$id }));
-      const data = JSON.parse(res.responseBody);
-      if (data.success) {
-        setCurrentQuestion(data.question);
-      } else {
-        Alert.alert('Error', data.error);
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const userData = await account.get();
+        setUser(userData);
+      } catch (e) {
+        // Not logged in
       }
-    } catch (e) {
-      Alert.alert('Error', (e as Error).message);
-    }
-  };
-
-  const submitResponse = async () => {
-    try {
-      const res = await functions.createExecution('submit-response', JSON.stringify({
-        userId: user.$id,
-        questionId: currentQuestion.$id,
-        responseText: response,
-        thinkingTime: 60 // dummy
-      }));
-      const data = JSON.parse(res.responseBody);
-      if (data.success) {
-        Alert.alert('Success', 'Response submitted');
-      } else {
-        Alert.alert('Error', data.error);
-      }
-    } catch (e) {
-      Alert.alert('Error', (e as Error).message);
-    }
-  };
-
-  const getAnalytics = async () => {
-    try {
-      const res = await functions.createExecution('get-user-analytics', JSON.stringify({ userId: user.$id }));
-      const data = JSON.parse(res.responseBody);
-      if (data.success) {
-        Alert.alert('Analytics', JSON.stringify(data.analytics));
-      } else {
-        Alert.alert('Error', data.error);
-      }
-    } catch (e) {
-      Alert.alert('Error', (e as Error).message);
-    }
-  };
+    };
+    checkUser();
+  }, []);
 
   return (
-    <View style={styles.container}>
-      <Text>Synapse Test App</Text>
-      {!user ? (
-        <Button title="Login" onPress={login} />
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
+      <Text style={{ fontSize: 32, fontWeight: 'bold', marginBottom: 10 }}>Synapse</Text>
+      <Text style={{ fontSize: 16, color: '#666', marginBottom: 30 }}>Think Deeper, Grow Stronger</Text>
+      {user ? (
+        <View style={{ alignItems: 'center' }}>
+          <Text style={{ marginBottom: 20 }}>Welcome back, {user.name || user.email}</Text>
+          <Button title="Topics" onPress={() => router.push('/topics')} />
+          <Button title="Question" onPress={() => router.push('/question')} />
+          <Button title="Analytics" onPress={() => router.push('/analytics')} />
+        </View>
       ) : (
-        <View>
-          <Text>Welcome {user.email}</Text>
-          <Button title="Get Topics" onPress={getTopics} />
-          {topics.map(t => (
-            <Button key={t.$id} title={`Select ${t.name}`} onPress={() => selectTopic(t.$id)} />
-          ))}
-          <Button title="Get Question" onPress={getQuestion} />
-          {currentQuestion && (
-            <View>
-              <Text>{currentQuestion.questionText}</Text>
-              <Button title="Submit Response" onPress={submitResponse} />
-            </View>
-          )}
-          <Button title="Get Analytics" onPress={getAnalytics} />
+        <View style={{ width: '80%' }}>
+          <Button title="Login" onPress={() => router.push('/login')} />
+          <View style={{ marginTop: 10 }}>
+            <Button title="Sign Up" onPress={() => router.push('/signup')} />
+          </View>
         </View>
       )}
-      <StatusBar style="auto" />
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
