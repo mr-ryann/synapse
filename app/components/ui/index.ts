@@ -14,8 +14,7 @@ export { BackgroundPaths } from './BackgroundPaths';
 export { TypewriterText } from './TypewriterText';
 export { AnimatedCounter } from './AnimatedCounter';
 
-// Additional Components (8)
-export { MagneticButton } from './MagneticButton';
+// Additional Components (7)
 export { StaggeredTextReveal } from './StaggeredTextReveal';
 export { RippleEffect } from './RippleEffect';
 export { SkeletonLoader } from './SkeletonLoader';

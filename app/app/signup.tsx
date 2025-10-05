@@ -1,164 +1,213 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
+import { AnimatedGridBackground, GlassmorphicInput, ShimmerButton, StaggeredTextReveal } from '../components/ui';
+import { THEME } from '../theme';
+import { useToast } from '../hooks/useToast';
 
-export default function Signup() {
+export default function SignupPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const { signupWithEmail, signupWithGoogle } = useAuth();
   const router = useRouter();
-  const { loading, signupWithEmail, signupWithGoogle } = useAuth();
+  const { showToast, ToastComponent } = useToast();
 
   const handleEmailSignup = async () => {
-    await signupWithEmail(email, password, confirmPassword, name);
+    try {
+      setIsLoading(true);
+      await signupWithEmail(email, password, confirmPassword, name);
+      showToast('Account created! 🎉', 'success');
+    } catch (error: any) {
+      showToast(error.message || 'Failed to create account', 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGoogleSignup = async () => {
-    await signupWithGoogle(
-      'exp://localhost:8081/auth-callback', // success redirect to check onboarding
-      'exp://localhost:8081/signup' // failure redirect
-    );
+    try {
+      await signupWithGoogle(
+        'exp://localhost:8081/auth-callback', // success redirect to check onboarding
+        'exp://localhost:8081/signup' // failure redirect
+      );
+      showToast('Account created! 🎉', 'success');
+    } catch (error: any) {
+      showToast(error.message || 'Failed to sign up with Google', 'error');
+    }
   };
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Create Account</Text>
+    <KeyboardAvoidingView 
+      style={styles.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    >
+      {/* Animated Background */}
+      <AnimatedGridBackground color={THEME.primary[500]} opacity={0.05} />
       
-      <TextInput
-        placeholder="Full Name"
-        value={name}
-        onChangeText={setName}
-        style={styles.input}
-        autoCapitalize="words"
-      />
-      
-      <TextInput
-        placeholder="Email"
-        value={email}
-        onChangeText={setEmail}
-        style={styles.input}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      
-      <TextInput
-        placeholder="Password"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-        style={styles.input}
-        autoCapitalize="none"
-      />
-      
-      <TextInput
-        placeholder="Confirm Password"
-        value={confirmPassword}
-        onChangeText={setConfirmPassword}
-        secureTextEntry
-        style={styles.input}
-        autoCapitalize="none"
-      />
-      
-      <TouchableOpacity 
-        style={[styles.button, styles.primaryButton]} 
-        onPress={handleEmailSignup}
-        disabled={loading}
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.buttonText}>
-          {loading ? 'Creating Account...' : 'Sign Up'}
-        </Text>
-      </TouchableOpacity>
+        {/* Header */}
+        <View style={styles.header}>
+          <StaggeredTextReveal 
+            text="Create Account" 
+            style={styles.title}
+            staggerDelay={80}
+          />
+          <Text style={styles.subtitle}>Join Synapse and start learning</Text>
+        </View>
 
-      <View style={styles.divider}>
-        <View style={styles.dividerLine} />
-        <Text style={styles.dividerText}>OR</Text>
-        <View style={styles.dividerLine} />
-      </View>
+        {/* Form */}
+        <View style={styles.form}>
+          <GlassmorphicInput
+            placeholder="Full Name"
+            value={name}
+            onChangeText={setName}
+            autoCapitalize="words"
+            style={styles.input}
+          />
+          
+          <GlassmorphicInput
+            placeholder="Email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            style={styles.input}
+          />
+          
+          <GlassmorphicInput
+            placeholder="Password"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            style={styles.input}
+          />
+          
+          <GlassmorphicInput
+            placeholder="Confirm Password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            secureTextEntry
+            autoCapitalize="none"
+            style={styles.input}
+          />
+          
+          <ShimmerButton 
+            onPress={handleEmailSignup}
+            disabled={isLoading}
+            variant="primary"
+            style={styles.signUpButton}
+          >
+            {isLoading ? 'Creating Account...' : 'Sign Up'}
+          </ShimmerButton>
 
-      <TouchableOpacity 
-        style={[styles.button, styles.googleButton]} 
-        onPress={handleGoogleSignup}
-      >
-        <Text style={styles.googleButtonText}>Continue with Google</Text>
-      </TouchableOpacity>
+          <View style={styles.divider}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>OR</Text>
+            <View style={styles.dividerLine} />
+          </View>
 
-      <TouchableOpacity onPress={() => router.push('/login')}>
-        <Text style={styles.linkText}>
-          Already have an account? <Text style={styles.linkBold}>Login</Text>
-        </Text>
-      </TouchableOpacity>
-    </ScrollView>
+          <ShimmerButton 
+            onPress={handleGoogleSignup}
+            variant="secondary"
+            style={styles.googleButton}
+          >
+            Continue with Google
+          </ShimmerButton>
+
+          <TouchableOpacity 
+            onPress={() => router.push('/login')}
+            style={styles.loginLink}
+          >
+            <Text style={styles.linkText}>
+              Already have an account?{' '}
+              <Text style={styles.linkBold}>Login</Text>
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+      
+      {ToastComponent}
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: THEME.dark.bg,
+  },
+  scrollContent: {
     flexGrow: 1,
     justifyContent: 'center',
-    padding: 20,
-    backgroundColor: '#fff',
+    padding: 24,
+    paddingTop: 60,
+  },
+  header: {
+    marginBottom: 40,
+    alignItems: 'center',
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 30,
+    fontWeight: '800',
+    color: THEME.neutral.white,
+    marginBottom: 12,
     textAlign: 'center',
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: THEME.neutral[400],
+    textAlign: 'center',
+    lineHeight: 22,
+    paddingHorizontal: 20,
+  },
+  form: {
+    width: '100%',
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 15,
-    marginBottom: 15,
-    borderRadius: 8,
-    fontSize: 16,
+    marginBottom: 16,
   },
-  button: {
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 15,
-  },
-  primaryButton: {
-    backgroundColor: '#007AFF',
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  googleButton: {
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#ddd',
-  },
-  googleButtonText: {
-    color: '#333',
-    fontSize: 16,
-    fontWeight: '600',
+  signUpButton: {
+    marginTop: 8,
+    marginBottom: 24,
   },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 20,
+    marginVertical: 24,
   },
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#ddd',
+    backgroundColor: THEME.neutral[800],
   },
   dividerText: {
-    marginHorizontal: 10,
-    color: '#999',
+    marginHorizontal: 16,
+    color: THEME.neutral[500],
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  googleButton: {
+    marginBottom: 32,
+  },
+  loginLink: {
+    alignItems: 'center',
+    paddingVertical: 12,
   },
   linkText: {
-    textAlign: 'center',
-    marginTop: 20,
-    color: '#666',
+    fontSize: 15,
+    color: THEME.neutral[400],
   },
   linkBold: {
-    color: '#007AFF',
-    fontWeight: '600',
+    color: THEME.primary[500],
+    fontWeight: '700',
   },
 });

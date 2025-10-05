@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
+import { View, Text, FlatList, StyleSheet, SafeAreaView } from 'react-native';
 import { databases, account } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
+import { SelectableCard, ShimmerButton, StaggeredTextReveal, AnimatedCounter } from '../components/ui';
+import { THEME } from '../theme';
+import { useToast } from '../hooks/useToast';
 
 interface Topic {
   $id: string;
@@ -15,6 +18,7 @@ export default function Onboarding() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { showToast, ToastComponent } = useToast();
 
   useEffect(() => {
     const init = async () => {
@@ -26,7 +30,7 @@ export default function Onboarding() {
         const res = await databases.listDocuments('synapse', 'topics');
         setTopics(res.documents as unknown as Topic[]);
       } catch (e) {
-        Alert.alert('Error', (e as Error).message);
+        showToast((e as Error).message || 'Failed to load topics', 'error');
         router.push('/login');
       }
     };
@@ -43,7 +47,7 @@ export default function Onboarding() {
 
   const handleContinue = async () => {
     if (selectedTopics.length === 0) {
-      Alert.alert('Please select at least one topic');
+      showToast('Please select at least one topic', 'warning');
       return;
     }
 
@@ -54,146 +58,112 @@ export default function Onboarding() {
         selectedTopics
       });
       
-      Alert.alert('Success', 'Your preferences have been saved!');
+      showToast('Your preferences have been saved! 🎉', 'success');
       router.push('/topics');
     } catch (e) {
-      Alert.alert('Error', (e as Error).message);
+      showToast((e as Error).message || 'Failed to save preferences', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Choose Your Interests</Text>
+        <StaggeredTextReveal 
+          text="Choose Your Interests" 
+          style={styles.title}
+          staggerDelay={80}
+        />
         <Text style={styles.subtitle}>
           Select topics that spark your curiosity. You can change these later.
         </Text>
-        <Text style={styles.counter}>
-          {selectedTopics.length} selected
-        </Text>
+        <View style={styles.counterContainer}>
+          <AnimatedCounter 
+            value={selectedTopics.length} 
+            style={styles.counterNumber}
+          />
+          <Text style={styles.counterLabel}> selected</Text>
+        </View>
       </View>
 
       <FlatList
         data={topics}
         keyExtractor={(item) => item.$id}
-        numColumns={2}
-        contentContainerStyle={styles.grid}
+        contentContainerStyle={styles.list}
+        showsVerticalScrollIndicator={false}
         renderItem={({ item }) => {
           const isSelected = selectedTopics.includes(item.$id);
           return (
-            <TouchableOpacity
-              onPress={() => toggleTopic(item.$id)}
-              style={[
-                styles.topicCard,
-                isSelected && styles.topicCardSelected
-              ]}
-            >
-              <Text style={[
-                styles.topicName,
-                isSelected && styles.topicNameSelected
-              ]}>
-                {item.name}
-              </Text>
-              <Text style={[
-                styles.topicDescription,
-                isSelected && styles.topicDescriptionSelected
-              ]}>
-                {item.description}
-              </Text>
-            </TouchableOpacity>
+            <SelectableCard
+              title={item.name}
+              description={item.description}
+              selected={isSelected}
+              onSelect={() => toggleTopic(item.$id)}
+            />
           );
         }}
       />
 
-      <TouchableOpacity
-        style={[
-          styles.continueButton,
-          selectedTopics.length === 0 && styles.continueButtonDisabled
-        ]}
-        onPress={handleContinue}
-        disabled={loading || selectedTopics.length === 0}
-      >
-        <Text style={styles.continueButtonText}>
+      <View style={styles.footer}>
+        <ShimmerButton
+          onPress={handleContinue}
+          disabled={loading || selectedTopics.length === 0}
+          variant="primary"
+        >
           {loading ? 'Saving...' : 'Continue'}
-        </Text>
-      </TouchableOpacity>
-    </View>
+        </ShimmerButton>
+      </View>
+      
+      {ToastComponent}
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: THEME.dark.bg,
   },
   header: {
-    padding: 20,
-    paddingTop: 60,
+    padding: 24,
+    paddingTop: 20,
+    paddingBottom: 16,
   },
   title: {
     fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontWeight: '800',
+    color: THEME.neutral.white,
+    marginBottom: 12,
+    letterSpacing: -0.5,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 10,
+    fontSize: 15,
+    color: THEME.neutral[400],
+    marginBottom: 16,
+    lineHeight: 22,
   },
-  counter: {
-    fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '600',
-  },
-  grid: {
-    padding: 10,
-  },
-  topicCard: {
-    flex: 1,
-    margin: 5,
-    padding: 15,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#ddd',
-    backgroundColor: '#fff',
-    minHeight: 120,
-  },
-  topicCardSelected: {
-    borderColor: '#007AFF',
-    backgroundColor: '#E3F2FD',
-  },
-  topicName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#333',
-  },
-  topicNameSelected: {
-    color: '#007AFF',
-  },
-  topicDescription: {
-    fontSize: 12,
-    color: '#666',
-    lineHeight: 16,
-  },
-  topicDescriptionSelected: {
-    color: '#0066CC',
-  },
-  continueButton: {
-    backgroundColor: '#007AFF',
-    padding: 18,
-    margin: 20,
-    borderRadius: 12,
+  counterContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
   },
-  continueButtonDisabled: {
-    backgroundColor: '#ccc',
+  counterNumber: {
+    fontSize: 24,
+    fontWeight: '800',
+    color: THEME.primary[500],
   },
-  continueButtonText: {
-    color: '#fff',
-    fontSize: 18,
+  counterLabel: {
+    fontSize: 16,
+    color: THEME.neutral[500],
     fontWeight: '600',
+  },
+  list: {
+    padding: 24,
+    paddingTop: 8,
+  },
+  footer: {
+    padding: 24,
+    paddingTop: 12,
+    paddingBottom: 32,
   },
 });
