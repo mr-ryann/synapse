@@ -1,7 +1,9 @@
 context/
 .env
 node_modules
-.md
+*.md
+!README.md
+*.log
 .vscode/
 .expo/
 .expo-shared/

@@ -1,62 +1,25 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ScrollView } from 'react-native';
-import { account } from '../lib/appwrite';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ID, OAuthProvider } from 'appwrite';
+import { useAuth } from '../hooks/useAuth';
 
 export default function Signup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { loading, signupWithEmail, signupWithGoogle } = useAuth();
 
   const handleEmailSignup = async () => {
-    if (!email || !password || !name) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
-    }
-
-    if (password.length < 8) {
-      Alert.alert('Error', 'Password must be at least 8 characters');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      // Create account
-      await account.create(ID.unique(), email, password, name);
-      
-      // Log in the user
-      await account.createEmailPasswordSession(email, password);
-      
-      Alert.alert('Success', 'Account created successfully!');
-      // Navigate to onboarding for topic selection
-      router.push('/onboarding');
-    } catch (e) {
-      Alert.alert('Error', (e as Error).message);
-    } finally {
-      setLoading(false);
-    }
+    await signupWithEmail(email, password, confirmPassword, name);
   };
 
   const handleGoogleSignup = async () => {
-    try {
-      // OAuth with Google - Appwrite will handle the redirect
-      account.createOAuth2Session(
-        OAuthProvider.Google,
-        'exp://localhost:8081/auth-callback', // success redirect to check onboarding
-        'exp://localhost:8081/signup' // failure redirect
-      );
-    } catch (e) {
-      Alert.alert('Error', (e as Error).message);
-    }
+    await signupWithGoogle(
+      'exp://localhost:8081/auth-callback', // success redirect to check onboarding
+      'exp://localhost:8081/signup' // failure redirect
+    );
   };
 
   return (

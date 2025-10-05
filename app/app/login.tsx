@@ -1,63 +1,23 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ScrollView } from 'react-native';
-import { account } from '../lib/appwrite';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { OAuthProvider } from 'appwrite';
+import { useAuth } from '../hooks/useAuth';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { loading, loginWithEmail, loginWithGoogle } = useAuth();
 
   const handleLogin = async () => {
-    if (!email || !password) {
-      Alert.alert('Error', 'Please fill in all fields');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      await account.createEmailPasswordSession(email, password);
-      const user = await account.get();
-      
-      // Check if user has completed onboarding (selected topics)
-      try {
-        const { databases } = await import('../lib/appwrite');
-        const userDoc = await databases.getDocument('synapse', 'users', user.$id);
-        const hasSelectedTopics = userDoc.selectedTopics && userDoc.selectedTopics.length > 0;
-        
-        Alert.alert('Success', `Welcome back, ${user.name || user.email}!`);
-        
-        // Redirect based on onboarding status
-        if (hasSelectedTopics) {
-          router.push('/topics');
-        } else {
-          router.push('/onboarding');
-        }
-      } catch (err) {
-        // If user document doesn't exist, redirect to onboarding
-        router.push('/onboarding');
-      }
-    } catch (e) {
-      Alert.alert('Error', (e as Error).message);
-    } finally {
-      setLoading(false);
-    }
+    await loginWithEmail(email, password);
   };
 
   const handleGoogleLogin = async () => {
-    try {
-      // OAuth with Google - Appwrite will handle the redirect
-      // Note: OAuth success will redirect to a route that checks onboarding status
-      account.createOAuth2Session(
-        OAuthProvider.Google,
-        'exp://localhost:8081/auth-callback', // success redirect to check onboarding
-        'exp://localhost:8081/login' // failure redirect
-      );
-    } catch (e) {
-      Alert.alert('Error', (e as Error).message);
-    }
+    await loginWithGoogle(
+      'exp://localhost:8081/auth-callback', // success redirect to check onboarding
+      'exp://localhost:8081/login' // failure redirect
+    );
   };
 
   return (
