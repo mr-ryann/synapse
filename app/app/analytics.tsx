@@ -2,7 +2,14 @@ import { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView, TouchableOpacity } from 'react-native';
 import { functions, account } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
-import { AnimatedCounter, GradientBorderCard, SkeletonLoader } from '../components/ui';
+import { 
+  AnimatedCounter, 
+  GradientBorderCard, 
+  SkeletonLoader,
+  ResponseTrendChart,
+  ThinkingTimeBarChart,
+  TopicProgressRings
+} from '../components/ui';
 import { THEME } from '../theme';
 import { useToast } from '../hooks/useToast';
 
@@ -58,57 +65,77 @@ export default function Analytics() {
 
         {analytics ? (
           <View style={styles.stats}>
-            {/* Total Responses Card */}
-            <GradientBorderCard borderWidth={2} borderRadius={20}>
-              <View style={styles.statCard}>
-                <Text style={styles.statLabel}>Total Responses</Text>
-                <AnimatedCounter
-                  value={analytics.totalResponses}
-                  duration={1200}
-                  style={styles.statValue}
-                />
-                <Text style={styles.statDescription}>
-                  Questions you've answered
-                </Text>
-              </View>
-            </GradientBorderCard>
-
-            {/* Average Thinking Time Card */}
-            <GradientBorderCard borderWidth={2} borderRadius={20}>
-              <View style={styles.statCard}>
-                <Text style={styles.statLabel}>Avg. Thinking Time</Text>
-                <View style={styles.timeContainer}>
+            {/* Quick Stats Row (Compact) */}
+            <View style={styles.quickStatsRow}>
+              <GradientBorderCard borderWidth={2} borderRadius={16} style={styles.quickStatCard}>
+                <View style={styles.compactStatCard}>
+                  <Text style={styles.compactStatLabel}>Total Responses</Text>
                   <AnimatedCounter
-                    value={analytics.averageThinkingTime}
+                    value={analytics.totalResponses}
                     duration={1200}
-                    decimals={1}
-                    style={styles.statValue}
+                    style={styles.compactStatValue}
                   />
-                  <Text style={styles.timeUnit}>sec</Text>
                 </View>
-                <Text style={styles.statDescription}>
-                  Per question on average
-                </Text>
-              </View>
-            </GradientBorderCard>
+              </GradientBorderCard>
 
-            {/* Total Thinking Time Card */}
-            <GradientBorderCard borderWidth={2} borderRadius={20}>
-              <View style={styles.statCard}>
-                <Text style={styles.statLabel}>Total Thinking Time</Text>
-                <View style={styles.timeContainer}>
-                  <AnimatedCounter
-                    value={analytics.totalThinkingTime}
-                    duration={1200}
-                    style={styles.statValue}
-                  />
-                  <Text style={styles.timeUnit}>sec</Text>
+              <GradientBorderCard borderWidth={2} borderRadius={16} style={styles.quickStatCard}>
+                <View style={styles.compactStatCard}>
+                  <Text style={styles.compactStatLabel}>Avg. Time</Text>
+                  <View style={styles.compactTimeContainer}>
+                    <AnimatedCounter
+                      value={analytics.averageThinkingTime}
+                      duration={1200}
+                      decimals={1}
+                      style={styles.compactStatValue}
+                    />
+                    <Text style={styles.compactTimeUnit}>s</Text>
+                  </View>
                 </View>
-                <Text style={styles.statDescription}>
-                  Time spent learning
-                </Text>
-              </View>
-            </GradientBorderCard>
+              </GradientBorderCard>
+            </View>
+
+            {/* Response Trend Chart */}
+            {analytics.responseTrend && (
+              <ResponseTrendChart 
+                data={analytics.responseTrend}
+                currentStreak={analytics.streakInfo?.currentStreak || 0}
+              />
+            )}
+
+            {/* Thinking Time by Topic Chart */}
+            {analytics.thinkingTimeByTopic && analytics.thinkingTimeByTopic.length > 0 && (
+              <ThinkingTimeBarChart data={analytics.thinkingTimeByTopic} />
+            )}
+
+            {/* Topic Progress Rings */}
+            {analytics.topicProgress && analytics.topicProgress.length > 0 && (
+              <TopicProgressRings data={analytics.topicProgress} />
+            )}
+
+            {/* Streak Info Card (if streaks exist) */}
+            {analytics.streakInfo && analytics.streakInfo.currentStreak > 0 && (
+              <GradientBorderCard borderWidth={2} borderRadius={20}>
+                <View style={styles.streakCard}>
+                  <Text style={styles.streakTitle}>🔥 Streak Statistics</Text>
+                  <View style={styles.streakStats}>
+                    <View style={styles.streakStat}>
+                      <Text style={styles.streakValue}>{analytics.streakInfo.currentStreak}</Text>
+                      <Text style={styles.streakLabel}>Current Streak</Text>
+                    </View>
+                    <View style={styles.streakDivider} />
+                    <View style={styles.streakStat}>
+                      <Text style={styles.streakValue}>{analytics.streakInfo.longestStreak}</Text>
+                      <Text style={styles.streakLabel}>Longest Streak</Text>
+                    </View>
+                    <View style={styles.streakDivider} />
+                    <View style={styles.streakStat}>
+                      <Text style={styles.streakValue}>{analytics.streakInfo.totalActiveDays}</Text>
+                      <Text style={styles.streakLabel}>Active Days</Text>
+                    </View>
+                  </View>
+                </View>
+              </GradientBorderCard>
+            )}
           </View>
         ) : (
           <View style={styles.loading}>
@@ -158,6 +185,78 @@ const styles = StyleSheet.create({
   },
   stats: {
     gap: 20,
+  },
+  quickStatsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  quickStatCard: {
+    flex: 1,
+  },
+  compactStatCard: {
+    alignItems: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 12,
+  },
+  compactStatLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: THEME.neutral[500],
+    marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  compactStatValue: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: THEME.primary[400],
+    letterSpacing: -1,
+  },
+  compactTimeContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+  },
+  compactTimeUnit: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: THEME.neutral[500],
+  },
+  streakCard: {
+    padding: 20,
+  },
+  streakTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: THEME.neutral.white,
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  streakStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+  },
+  streakStat: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  streakValue: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: THEME.primary[400],
+    marginBottom: 4,
+  },
+  streakLabel: {
+    fontSize: 12,
+    color: THEME.neutral[500],
+    textAlign: 'center',
+  },
+  streakDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: THEME.neutral[800],
+    marginHorizontal: 8,
   },
   statCard: {
     alignItems: 'center',

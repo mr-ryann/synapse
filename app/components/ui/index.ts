@@ -22,3 +22,8 @@ export { ConfettiCelebration } from './ConfettiCelebration';
 export { FloatingActionButton } from './FloatingActionButton';
 export { ToastNotification } from './ToastNotification';
 export { GradientBorderCard } from './GradientBorderCard';
+
+// Analytics Chart Components (3)
+export { ResponseTrendChart } from './ResponseTrendChart';
+export { ThinkingTimeBarChart } from './ThinkingTimeBarChart';
+export { TopicProgressRings } from './TopicProgressRings';
