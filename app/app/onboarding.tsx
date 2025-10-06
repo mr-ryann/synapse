@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { databases, account } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
+import { TopHeader } from '../components/navigation/TopHeader';
 
 interface Topic {
   $id: string;
@@ -65,21 +66,24 @@ export default function Onboarding() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Choose Your Interests</Text>
-        <Text style={styles.subtitle}>
-          Select topics that spark your curiosity. You can change these later.
-        </Text>
-        <Text style={styles.counter}>
-          {selectedTopics.length} selected
-        </Text>
-      </View>
+      <TopHeader />
 
       <FlatList
         data={topics}
         keyExtractor={(item) => item.$id}
         numColumns={2}
         contentContainerStyle={styles.grid}
+        ListHeaderComponent={(
+          <View style={styles.header}>
+            <Text style={styles.title}>Choose Your Interests</Text>
+            <Text style={styles.subtitle}>
+              Select topics that spark your curiosity. You can change these later.
+            </Text>
+            <Text style={styles.counter}>
+              {selectedTopics.length} selected
+            </Text>
+          </View>
+        )}
         renderItem={({ item }) => {
           const isSelected = selectedTopics.includes(item.$id);
           return (
@@ -126,29 +130,32 @@ export default function Onboarding() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#000',
   },
   header: {
-    padding: 20,
-    paddingTop: 60,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 12,
   },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: '#fff',
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
+    color: '#cccccc',
     marginBottom: 10,
   },
   counter: {
     fontSize: 14,
-    color: '#007AFF',
+    color: '#3b82f6',
     fontWeight: '600',
   },
   grid: {
-    padding: 10,
+    paddingHorizontal: 10,
+    paddingBottom: 32,
   },
   topicCard: {
     flex: 1,
@@ -156,40 +163,40 @@ const styles = StyleSheet.create({
     padding: 15,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#ddd',
-    backgroundColor: '#fff',
+    borderColor: '#2a2a2a',
+    backgroundColor: '#1a1a1a',
     minHeight: 120,
   },
   topicCardSelected: {
-    borderColor: '#007AFF',
-    backgroundColor: '#E3F2FD',
+    borderColor: '#3b82f6',
+    backgroundColor: '#1e3a5f',
   },
   topicName: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
-    color: '#333',
+    color: '#ffffff',
   },
   topicNameSelected: {
-    color: '#007AFF',
+    color: '#60a5fa',
   },
   topicDescription: {
     fontSize: 12,
-    color: '#666',
+    color: '#999999',
     lineHeight: 16,
   },
   topicDescriptionSelected: {
-    color: '#0066CC',
+    color: '#93c5fd',
   },
   continueButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#3b82f6',
     padding: 18,
     margin: 20,
     borderRadius: 12,
     alignItems: 'center',
   },
   continueButtonDisabled: {
-    backgroundColor: '#ccc',
+    backgroundColor: '#333333',
   },
   continueButtonText: {
     color: '#fff',

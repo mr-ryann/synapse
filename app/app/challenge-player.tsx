@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { BackButton } from '../components/navigation/BackButton';
 
 interface ChallengeStep {
   id: string;
@@ -97,24 +98,71 @@ export default function ChallengePlayer() {
   };
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 16 }}>
-        Challenge Player - Step {currentStepIndex + 1} of {mockSteps.length}
-      </Text>
-      {renderStep()}
-      <TouchableOpacity
-        style={{
-          padding: 16,
-          backgroundColor: '#007AFF',
-          borderRadius: 8,
-          marginTop: 16,
-        }}
-        onPress={handleNext}
-      >
-        <Text style={{ color: 'white', textAlign: 'center' }}>
-          {currentStepIndex < mockSteps.length - 1 ? 'Next' : 'Complete'}
+    <View style={styles.container}>
+      <View style={styles.header}>
+        <BackButton />
+        <Text style={styles.progress}>
+          Step {currentStepIndex + 1} of {mockSteps.length}
         </Text>
-      </TouchableOpacity>
+        <View style={{ width: 40 }} />
+      </View>
+      <ScrollView style={styles.content}>
+        <View style={styles.inner}>
+          {renderStep()}
+        </View>
+      </ScrollView>
+      <View style={styles.footer}>
+        <TouchableOpacity
+          style={styles.nextButton}
+          onPress={handleNext}
+        >
+          <Text style={styles.nextButtonText}>
+            {currentStepIndex < mockSteps.length - 1 ? 'Next' : 'Complete'}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  progress: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  content: {
+    flex: 1,
+  },
+  inner: {
+    padding: 16,
+  },
+  footer: {
+    padding: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  nextButton: {
+    padding: 16,
+    backgroundColor: '#3b82f6',
+    borderRadius: 8,
+  },
+  nextButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+});

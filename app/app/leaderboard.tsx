@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, FlatList } from 'react-native';
+import { View, Text, FlatList, StyleSheet } from 'react-native';
+import { TopHeader } from '../components/navigation/TopHeader';
 
 interface LeaderboardEntry {
   id: string;
@@ -18,33 +19,77 @@ const mockLeaderboard: LeaderboardEntry[] = [
 
 export default function Leaderboard() {
   const renderEntry = ({ item, index }: { item: LeaderboardEntry; index: number }) => (
-    <View
-      style={{
-        flexDirection: 'row',
-        padding: 16,
-        margin: 4,
-        backgroundColor: '#f0f0f0',
-        borderRadius: 8,
-      }}
-    >
-      <Text style={{ width: 30, fontWeight: 'bold' }}>#{index + 1}</Text>
-      <Text style={{ flex: 1 }}>{item.name}</Text>
-      <Text>XP: {item.xp}</Text>
-      <Text>Lvl: {item.level}</Text>
-      <Text>Streak: {item.streak}</Text>
+    <View style={styles.entryCard}>
+      <Text style={styles.rank}>#{index + 1}</Text>
+      <Text style={styles.name}>{item.name}</Text>
+      <View style={styles.stats}>
+        <Text style={styles.stat}>XP: {item.xp}</Text>
+        <Text style={styles.stat}>Lvl: {item.level}</Text>
+        <Text style={styles.stat}>🔥 {item.streak}</Text>
+      </View>
     </View>
   );
 
   return (
-    <View style={{ flex: 1, padding: 16 }}>
-      <Text style={{ fontSize: 24, fontWeight: 'bold', marginBottom: 16 }}>
-        Leaderboard
-      </Text>
-      <FlatList
-        data={mockLeaderboard}
-        renderItem={renderEntry}
-        keyExtractor={(item) => item.id}
-      />
+    <View style={styles.container}>
+      <TopHeader />
+      <View style={styles.content}>
+        <Text style={styles.heading}>Leaderboard</Text>
+        <FlatList
+          data={mockLeaderboard}
+          renderItem={renderEntry}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={styles.listContent}
+        />
+      </View>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  content: {
+    flex: 1,
+    padding: 16,
+  },
+  heading: {
+    fontSize: 28,
+    fontWeight: '700',
+    color: '#1f2937',
+    marginBottom: 16,
+  },
+  listContent: {
+    paddingBottom: 16,
+  },
+  entryCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    marginBottom: 8,
+    backgroundColor: '#f9fafb',
+    borderRadius: 8,
+  },
+  rank: {
+    width: 40,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#3b82f6',
+  },
+  name: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1f2937',
+  },
+  stats: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  stat: {
+    fontSize: 14,
+    color: '#6b7280',
+  },
+});
