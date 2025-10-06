@@ -19,12 +19,12 @@
         },
         "auth": {
             "methods": {
-                "jwt": true,
+                "jwt": false,
                 "phone": true,
                 "invites": false,
                 "anonymous": false,
-                "email-otp": true,
-                "magic-url": true,
+                "email-otp": false,
+                "magic-url": false,
                 "email-password": true
             },
             "security": {
@@ -41,77 +41,11 @@
     },
     "functions": [
         {
-            "$id": "68e0e9a90028c0bd1870",
-            "execute": [],
-            "name": "on-user-create",
-            "enabled": true,
-            "logging": true,
-            "runtime": "python-3.12",
-            "scopes": [],
-            "events": [],
-            "schedule": "",
-            "timeout": 15,
-            "entrypoint": "src/main.py",
-            "commands": "pip install -r requirements.txt",
-            "specification": "s-0.5vcpu-512mb",
-            "path": "functions/on-user-create"
-        },
-        {
-            "$id": "68e0eb82003d1b273407",
-            "execute": [],
-            "name": "get-question",
-            "enabled": true,
-            "logging": true,
-            "runtime": "python-3.12",
-            "scopes": [],
-            "events": [],
-            "schedule": "",
-            "timeout": 15,
-            "entrypoint": "src/main.py",
-            "commands": "pip install -r requirements.txt",
-            "specification": "s-0.5vcpu-512mb",
-            "path": "functions/get-question"
-        },
-        {
-            "$id": "68e0ebcd003a68606faa",
-            "execute": [],
-            "name": "generate-unique-challenge",
-            "enabled": true,
-            "logging": true,
-            "runtime": "python-3.12",
-            "scopes": [],
-            "events": [],
-            "schedule": "",
-            "timeout": 15,
-            "entrypoint": "src/main.py",
-            "commands": "pip install -r requirements.txt",
-            "specification": "s-0.5vcpu-512mb",
-            "path": "functions/generate-unique-challenge"
-        },
-        {
-            "$id": "68e0ebff0028332f5cf5",
+            "$id": "getChallengeForUser",
             "execute": [
                 "any"
             ],
-            "name": "submit-response",
-            "enabled": true,
-            "logging": true,
-            "runtime": "python-3.12",
-            "scopes": [
-                "users.read"
-            ],
-            "events": [],
-            "schedule": "",
-            "timeout": 15,
-            "entrypoint": "src/main.py",
-            "commands": "pip install -r requirements.txt",
-            "specification": "s-0.5vcpu-512mb",
-            "path": "functions/submit-response"
-        },
-        {
-            "$id": "68e0ec42000bba7b9ef4",
-            "execute": [],
-            "name": "submit-feedback",
+            "name": "Get Challenge For User",
             "enabled": true,
             "logging": true,
             "runtime": "python-3.12",
@@ -120,48 +54,16 @@
             "schedule": "",
             "timeout": 15,
             "entrypoint": "src/main.py",
-            "commands": "pip install -r requirements.txt",
-            "specification": "s-0.5vcpu-512mb",
-            "path": "functions/submit-feedback"
+            "commands": "",
+            "specification": "s-1vcpu-512mb",
+            "path": "functions/Get Challenge For User"
         },
         {
-            "$id": "68e0ec5e0005ac84f230",
-            "execute": [],
-            "name": "get-user-analytics",
-            "enabled": true,
-            "logging": true,
-            "runtime": "python-3.12",
-            "scopes": [],
-            "events": [],
-            "schedule": "",
-            "timeout": 15,
-            "entrypoint": "src/main.py",
-            "commands": "pip install -r requirements.txt",
-            "specification": "s-0.5vcpu-512mb",
-            "path": "functions/get-user-analytics"
-        },
-        {
-            "$id": "68e0ec740038359cdc31",
-            "execute": [],
-            "name": "get-ai-hint",
-            "enabled": true,
-            "logging": true,
-            "runtime": "python-3.12",
-            "scopes": [],
-            "events": [],
-            "schedule": "",
-            "timeout": 15,
-            "entrypoint": "src/main.py",
-            "commands": "pip install -r requirements.txt",
-            "specification": "s-0.5vcpu-512mb",
-            "path": "functions/get-ai-hint"
-        },
-        {
-            "$id": "manage-topics",
+            "$id": "submit-challenge-step",
             "execute": [
                 "any"
             ],
-            "name": "manage-topics",
+            "name": "Submit Challenge Step",
             "enabled": true,
             "logging": true,
             "runtime": "python-3.12",
@@ -170,16 +72,16 @@
             "schedule": "",
             "timeout": 15,
             "entrypoint": "src/main.py",
-            "commands": "pip install -r requirements.txt",
-            "specification": "s-0.5vcpu-512mb",
-            "path": "functions/manage-topics"
+            "commands": "",
+            "specification": "s-1vcpu-512mb",
+            "path": "functions/Submit Challenge Step"
         },
         {
-            "$id": "record-question-view",
+            "$id": "get-user-analytics",
             "execute": [
                 "any"
             ],
-            "name": "record-question-view",
+            "name": "Get User Analytics",
             "enabled": true,
             "logging": true,
             "runtime": "python-3.12",
@@ -188,9 +90,153 @@
             "schedule": "",
             "timeout": 15,
             "entrypoint": "src/main.py",
-            "commands": "pip install -r requirements.txt",
-            "specification": "s-0.5vcpu-512mb",
-            "path": "functions/record-question-view"
+            "commands": "",
+            "specification": "s-1vcpu-512mb",
+            "path": "functions/Get User Analytics"
+        },
+        {
+            "$id": "get-ai-hint",
+            "execute": [
+                "any"
+            ],
+            "name": "Get AI Hint",
+            "enabled": true,
+            "logging": true,
+            "runtime": "python-3.12",
+            "scopes": [],
+            "events": [],
+            "schedule": "",
+            "timeout": 15,
+            "entrypoint": "src/main.py",
+            "commands": "",
+            "specification": "s-1vcpu-512mb",
+            "path": "functions/Get AI Hint"
+        },
+        {
+            "$id": "oauth-callback",
+            "execute": [
+                "any"
+            ],
+            "name": "OAuth Callback",
+            "enabled": true,
+            "logging": true,
+            "runtime": "python-3.12",
+            "scopes": [],
+            "events": [],
+            "schedule": "",
+            "timeout": 15,
+            "entrypoint": "src/main.py",
+            "commands": "",
+            "specification": "s-1vcpu-512mb",
+            "path": "functions/OAuth Callback"
+        },
+        {
+            "$id": "verify-email",
+            "execute": [
+                "any"
+            ],
+            "name": "Verify Email",
+            "enabled": true,
+            "logging": true,
+            "runtime": "python-3.12",
+            "scopes": [],
+            "events": [],
+            "schedule": "",
+            "timeout": 15,
+            "entrypoint": "src/main.py",
+            "commands": "",
+            "specification": "s-1vcpu-512mb",
+            "path": "functions/Verify Email"
+        },
+        {
+            "$id": "password-reset",
+            "execute": [
+                "any"
+            ],
+            "name": "Password Reset",
+            "enabled": true,
+            "logging": true,
+            "runtime": "python-3.12",
+            "scopes": [],
+            "events": [],
+            "schedule": "",
+            "timeout": 15,
+            "entrypoint": "src/main.py",
+            "commands": "",
+            "specification": "s-1vcpu-512mb",
+            "path": "functions/Password Reset"
+        },
+        {
+            "$id": "expandTopics",
+            "execute": [
+                "any"
+            ],
+            "name": "Expand Topics",
+            "enabled": true,
+            "logging": true,
+            "runtime": "python-3.12",
+            "scopes": [],
+            "events": [],
+            "schedule": "0 0 * * 0",
+            "timeout": 15,
+            "entrypoint": "src/main.py",
+            "commands": "",
+            "specification": "s-1vcpu-512mb",
+            "path": "functions/Expand Topics"
+        },
+        {
+            "$id": "populateUserFeeds",
+            "execute": [
+                "any"
+            ],
+            "name": "Populate User Feeds",
+            "enabled": true,
+            "logging": true,
+            "runtime": "python-3.12",
+            "scopes": [],
+            "events": [],
+            "schedule": "0 0 * * *",
+            "timeout": 15,
+            "entrypoint": "src/main.py",
+            "commands": "",
+            "specification": "s-1vcpu-512mb",
+            "path": "functions/Populate User Feeds"
+        },
+        {
+            "$id": "update-user-gamification",
+            "execute": [
+                "any"
+            ],
+            "name": "Update User Gamification",
+            "enabled": true,
+            "logging": true,
+            "runtime": "python-3.12",
+            "scopes": [],
+            "events": [],
+            "schedule": "",
+            "timeout": 15,
+            "entrypoint": "src/main.py",
+            "commands": "",
+            "specification": "s-1vcpu-512mb",
+            "path": "functions/Update User Gamification"
+        },
+        {
+            "$id": "get-leaderboard",
+            "execute": [
+                "any"
+            ],
+            "name": "Get Leaderboard",
+            "enabled": true,
+            "logging": true,
+            "runtime": "python-3.12",
+            "scopes": [],
+            "events": [],
+            "schedule": "",
+            "timeout": 15,
+            "entrypoint": "src/main.py",
+            "commands": "",
+            "specification": "s-1vcpu-512mb",
+            "path": "functions/Get Leaderboard"
         }
     ],
     "tablesDB": [
@@ -198,6 +244,597 @@
             "$id": "synapse",
             "name": "synapse",
             "enabled": true
+        }
+    ],
+    "tables": [
+        {
+            "$id": "users",
+            "$permissions": [
+                "create(\"users\")"
+            ],
+            "databaseId": "synapse",
+            "name": "Users",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "email",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "selectedTopics",
+                    "type": "string",
+                    "required": false,
+                    "array": true,
+                    "size": 5000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "bio",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 1000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "level",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                },
+                {
+                    "key": "xp",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                },
+                {
+                    "key": "streak",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                },
+                {
+                    "key": "preferences",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 1000,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "topics",
+            "$permissions": [
+                "read(\"users\")"
+            ],
+            "databaseId": "synapse",
+            "name": "Topics",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "name",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "description",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 1000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "category",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": []
+        },
+        {
+            "$id": "responses",
+            "$permissions": [
+                "create(\"users\")"
+            ],
+            "databaseId": "synapse",
+            "name": "Responses",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 512,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "questionId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 512,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "responseText",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 10000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "thinkingTime",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                },
+                {
+                    "key": "mediaType",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "aiAssisted",
+                    "type": "boolean",
+                    "required": false,
+                    "array": false,
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_index",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "userId"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "user_challenge_history",
+            "$permissions": [
+                "create(\"users\")",
+                "read(\"users\")",
+                "update(\"users\")",
+                "delete(\"users\")"
+            ],
+            "databaseId": "synapse",
+            "name": "User Challenge History",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "questionId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "timestamp",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "responseId",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "challengeId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 512,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "challengeType",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "completionTime",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                },
+                {
+                    "key": "xpEarned",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_index",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "userId"
+                    ],
+                    "orders": []
+                },
+                {
+                    "key": "userId_questionId_index",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "userId",
+                        "questionId"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "challenges",
+            "$permissions": [
+                "read(\"users\")"
+            ],
+            "databaseId": "synapse",
+            "name": "Challenges",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "type",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "topicId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 512,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "subcategory",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 255,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "difficulty",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                },
+                {
+                    "key": "steps",
+                    "type": "string",
+                    "required": true,
+                    "array": true,
+                    "size": 10000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "xpReward",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                },
+                {
+                    "key": "estimatedTime",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "topicId_index",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "topicId"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "challenge_steps",
+            "$permissions": [
+                "read(\"users\")"
+            ],
+            "databaseId": "synapse",
+            "name": "Challenge Steps",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "challengeId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 512,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "stepType",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 50,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "content",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 10000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "options",
+                    "type": "string",
+                    "required": false,
+                    "array": true,
+                    "size": 5000,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "aiPrompt",
+                    "type": "string",
+                    "required": false,
+                    "array": false,
+                    "size": 1000,
+                    "default": null,
+                    "encrypt": false
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "challengeId_index",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "challengeId"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "user_progress",
+            "$permissions": [
+                "create(\"users\")"
+            ],
+            "databaseId": "synapse",
+            "name": "User Progress",
+            "enabled": true,
+            "rowSecurity": true,
+            "columns": [
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 512,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "challengeId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 512,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "currentStep",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                },
+                {
+                    "key": "startTime",
+                    "type": "datetime",
+                    "required": true,
+                    "array": false,
+                    "format": "",
+                    "default": null
+                },
+                {
+                    "key": "totalTime",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                },
+                {
+                    "key": "xpEarned",
+                    "type": "integer",
+                    "required": false,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "userId_index",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "userId"
+                    ],
+                    "orders": []
+                }
+            ]
+        },
+        {
+            "$id": "leaderboard",
+            "$permissions": [
+                "read(\"users\")"
+            ],
+            "databaseId": "synapse",
+            "name": "Leaderboard",
+            "enabled": true,
+            "rowSecurity": false,
+            "columns": [
+                {
+                    "key": "userId",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 512,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "xp",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                },
+                {
+                    "key": "level",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                },
+                {
+                    "key": "streak",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                }
+            ],
+            "indexes": [
+                {
+                    "key": "xp_index",
+                    "type": "key",
+                    "status": "available",
+                    "columns": [
+                        "xp"
+                    ],
+                    "orders": [
+                        "DESC"
+                    ]
+                }
+            ]
         }
     ]
 }

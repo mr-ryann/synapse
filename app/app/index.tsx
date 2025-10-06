@@ -1,43 +1,36 @@
-import { useState, useEffect } from 'react';
-import { View, Text, Button } from 'react-native';
-import { account } from '../lib/appwrite';
+import { useEffect } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useUserStore } from '../stores';
+import { COLORS } from '../theme/colors';
 
 export default function Home() {
-  const [user, setUser] = useState<any>(null);
   const router = useRouter();
+  const { user } = useUserStore();
 
   useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const userData = await account.get();
-        setUser(userData);
-      } catch (e) {
-        // Not logged in
+    // Redirect based on auth state
+    if (user) {
+      // User is logged in, check onboarding status
+      if (user.preferences?.topics && user.preferences.topics.length > 0) {
+        router.replace('/topics');
+      } else {
+        router.replace('/onboarding');
       }
-    };
-    checkUser();
-  }, []);
+    } else {
+      // User not logged in, redirect to login
+      router.replace('/login');
+    }
+  }, [user, router]);
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: '#fff' }}>
-      <Text style={{ fontSize: 32, fontWeight: 'bold', marginBottom: 10 }}>Synapse</Text>
-      <Text style={{ fontSize: 16, color: '#666', marginBottom: 30 }}>Think Deeper, Grow Stronger</Text>
-      {user ? (
-        <View style={{ alignItems: 'center' }}>
-          <Text style={{ marginBottom: 20 }}>Welcome back, {user.name || user.email}</Text>
-          <Button title="Topics" onPress={() => router.push('/topics')} />
-          <Button title="Question" onPress={() => router.push('/question')} />
-          <Button title="Analytics" onPress={() => router.push('/analytics')} />
-        </View>
-      ) : (
-        <View style={{ width: '80%' }}>
-          <Button title="Login" onPress={() => router.push('/login')} />
-          <View style={{ marginTop: 10 }}>
-            <Button title="Sign Up" onPress={() => router.push('/signup')} />
-          </View>
-        </View>
-      )}
+    <View style={{
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: COLORS.background.primary,
+    }}>
+      <ActivityIndicator size="large" color={COLORS.primary[500]} />
     </View>
   );
 }

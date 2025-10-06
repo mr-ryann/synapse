@@ -3,6 +3,7 @@ import { Alert } from 'react-native';
 import { account, databases } from '../lib/appwrite';
 import { ID, OAuthProvider } from 'appwrite';
 import { useRouter } from 'expo-router';
+import { useUserStore } from '../stores';
 
 /**
  * Custom hook for authentication operations
@@ -11,6 +12,7 @@ import { useRouter } from 'expo-router';
 export const useAuth = () => {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const { setUser, clearUser } = useUserStore();
 
   /**
    * Check if user has completed onboarding (selected topics)
@@ -31,13 +33,48 @@ export const useAuth = () => {
    * If topics selected -> /topics, otherwise -> /onboarding
    */
   const navigateAfterAuth = async (userId: string, userName?: string, userEmail?: string) => {
-    const hasSelectedTopics = await checkOnboardingStatus(userId);
-    
-    Alert.alert('Success', `Welcome ${hasSelectedTopics ? 'back' : ''}, ${userName || userEmail}!`);
-    
-    if (hasSelectedTopics) {
-      router.push('/topics');
-    } else {
+    try {
+      const userDoc = await databases.getDocument('synapse', 'users', userId);
+      const user = {
+        $id: userId,
+        email: userEmail || userDoc.email,
+        name: userName || userDoc.username,
+        selectedTopics: userDoc.selectedTopics || [],
+        level: userDoc.level || 1,
+        xp: userDoc.xp || 0,
+        currentStreak: userDoc.currentStreak || 0,
+        longestStreak: userDoc.longestStreak || 0,
+        totalChallengesCompleted: userDoc.totalChallengesCompleted || 0,
+        onboardingCompleted: userDoc.onboardingCompleted || false,
+        lastActivityDate: userDoc.lastActivityDate,
+        emailVerified: userDoc.emailVerified,
+      };
+      setUser(user);
+
+      const hasSelectedTopics = user.selectedTopics.length > 0;
+      
+      Alert.alert('Success', `Welcome ${hasSelectedTopics ? 'back' : ''}, ${userName || userEmail}!`);
+      
+      if (hasSelectedTopics) {
+        router.push('/topics');
+      } else {
+        router.push('/onboarding');
+      }
+    } catch (err) {
+      // If user document doesn't exist, onboarding not complete
+      const user = {
+        $id: userId,
+        email: userEmail || '',
+        name: userName,
+        selectedTopics: [],
+        level: 1,
+        xp: 0,
+        currentStreak: 0,
+        longestStreak: 0,
+        totalChallengesCompleted: 0,
+        onboardingCompleted: false,
+      };
+      setUser(user);
       router.push('/onboarding');
     }
   };
@@ -173,6 +210,7 @@ export const useAuth = () => {
   const logout = async () => {
     try {
       await account.deleteSession('current');
+      clearUser();
       router.push('/login');
     } catch (e) {
       Alert.alert('Error', (e as Error).message);

@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
-import { account } from '../lib/appwrite';
+import { functions } from '../lib/appwrite';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 
 export default function ResetPasswordConfirm() {
@@ -26,27 +26,44 @@ export default function ResetPasswordConfirm() {
       return;
     }
 
+    if (!userId || !secret) {
+      Alert.alert('Error', 'Invalid reset link. Please request a new password reset.');
+      return;
+    }
+
     setLoading(true);
     try {
-      // Complete password recovery
-      await account.updateRecovery(
-        userId as string,
-        secret as string,
-        password
+      // Call password-reset serverless function
+      const result = await functions.createExecution(
+        'password-reset',
+        JSON.stringify({
+          action: 'confirm',
+          userId: userId as string,
+          secret: secret as string,
+          password: password,
+          passwordConfirm: confirmPassword
+        })
       );
       
-      Alert.alert(
-        'Success',
-        'Your password has been reset successfully. Please login with your new password.',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.push('/login')
-          }
-        ]
-      );
+      const response = JSON.parse(result.responseBody);
+      
+      if (response.success) {
+        Alert.alert(
+          'Success',
+          'Your password has been reset successfully. Please login with your new password.',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.push('/login')
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Error', response.error || 'Failed to reset password');
+      }
     } catch (e) {
-      Alert.alert('Error', (e as Error).message);
+      console.error('Confirm reset error:', e);
+      Alert.alert('Error', 'Failed to reset password. The link may have expired.');
     } finally {
       setLoading(false);
     }

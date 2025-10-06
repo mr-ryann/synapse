@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
-import { account } from '../lib/appwrite';
+import { functions } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
 
 export default function ResetPassword() {
@@ -14,27 +14,44 @@ export default function ResetPassword() {
       return;
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
     setLoading(true);
     try {
-      // Send password recovery email
-      // The reset URL will be: your-app-url/reset-password-confirm
-      await account.createRecovery(
-        email,
-        'exp://localhost:8081/reset-password-confirm' // URL for password reset confirmation
+      // Call password-reset serverless function
+      const result = await functions.createExecution(
+        'password-reset',
+        JSON.stringify({
+          action: 'request',
+          email: email,
+          resetUrl: 'exp://localhost:8081/reset-password-confirm'
+        })
       );
       
-      Alert.alert(
-        'Success', 
-        'Password reset link has been sent to your email. Please check your inbox.',
-        [
-          {
-            text: 'OK',
-            onPress: () => router.push('/login')
-          }
-        ]
-      );
+      const response = JSON.parse(result.responseBody);
+      
+      if (response.success) {
+        Alert.alert(
+          'Success', 
+          'Password reset link has been sent to your email. Please check your inbox.',
+          [
+            {
+              text: 'OK',
+              onPress: () => router.push('/login')
+            }
+          ]
+        );
+      } else {
+        Alert.alert('Error', response.error || 'Failed to send reset email');
+      }
     } catch (e) {
-      Alert.alert('Error', (e as Error).message);
+      console.error('Reset password error:', e);
+      Alert.alert('Error', 'Failed to send reset email. Please try again.');
     } finally {
       setLoading(false);
     }
