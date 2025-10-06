@@ -3,7 +3,7 @@ import { View, Text, ActivityIndicator, Alert } from 'react-native';
 import { account, databases, functions } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
 import { useUserStore } from '../stores';
-import { COLORS } from '../theme/colors';
+import { COLORS } from '../theme';
 
 export default function AuthCallback() {
   const router = useRouter();
@@ -119,7 +119,7 @@ export default function AuthCallback() {
       alignItems: 'center',
       backgroundColor: COLORS.background.primary,
     }}>
-      <ActivityIndicator size="large" color={COLORS.primary[500]} />
+  <ActivityIndicator size="large" color={COLORS.accent.primary} />
       <Text style={{
         marginTop: 20,
         color: COLORS.text.primary,

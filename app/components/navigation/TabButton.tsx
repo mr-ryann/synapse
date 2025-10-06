@@ -2,6 +2,7 @@ import React, { useRef, useEffect } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { Animated } from 'react-native';
 import type { LucideIcon } from 'lucide-react-native';
+import { COLORS, FONTS } from '../../theme';
 
 interface TabButtonProps {
   icon: LucideIcon;
@@ -40,14 +41,15 @@ export const TabButton = React.memo<TabButtonProps>(({
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
         <Icon
           size={24}
-          color={isActive ? '#3b82f6' : '#cccccc'}
+          color={isActive ? COLORS.accent.primary : COLORS.text.secondary}
         />
       </Animated.View>
       <Text
         style={{
           fontSize: 12,
           marginTop: 4,
-          color: isActive ? '#3b82f6' : '#cccccc',
+          color: isActive ? COLORS.accent.primary : COLORS.text.secondary,
+          fontFamily: FONTS.body,
           fontWeight: isActive ? '600' : '400',
         }}
       >

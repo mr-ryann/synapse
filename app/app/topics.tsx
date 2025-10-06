@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, StyleSheet, ScrollView } from 'react-native';
 import { databases, account } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
-import { TopHeader } from '../components/navigation/TopHeader';
+import { COLORS, FONTS } from '../theme';
 
 interface Topic {
   $id: string;
@@ -17,28 +17,28 @@ export default function Topics() {
   const router = useRouter();
 
   useEffect(() => {
-    const checkUser = async () => {
+    const init = async () => {
       try {
         const userData = await account.get();
         setUser(userData);
         // Load selected topics from user profile
         const userDoc = await databases.getDocument('synapse', 'users', userData.$id);
         setSelectedTopics(userDoc.selectedTopics || []);
+        // Derive unique topics from challenges collection
+        const res = await databases.listDocuments('synapse', 'challenges');
+        const docs = res.documents as Array<any>;
+        const uniqueNames = Array.from(new Set(docs.map(d => d.topicName)));
+        const derivedTopics: Topic[] = uniqueNames.map(name => ({
+          $id: name,
+          name,
+          description: '',
+        }));
+        setTopics(derivedTopics);
       } catch (e) {
         router.push('/login');
       }
     };
-    checkUser();
-
-    const fetchTopics = async () => {
-      try {
-        const res = await databases.listDocuments('synapse', 'topics');
-        setTopics(res.documents as unknown as Topic[]);
-      } catch (e) {
-        Alert.alert('Error', (e as Error).message);
-      }
-    };
-    fetchTopics();
+    init();
   }, []);
 
   const toggleTopic = async (topicId: string) => {
@@ -57,7 +57,6 @@ export default function Topics() {
 
   return (
     <View style={styles.container}>
-      <TopHeader />
       <ScrollView style={styles.content}>
         <View style={styles.inner}>
           <Text style={styles.heading}>Select Topics</Text>
@@ -65,34 +64,46 @@ export default function Topics() {
             Choose topics you're interested in. You can change these anytime in settings.
           </Text>
           <View style={styles.topicsContainer}>
-            {topics.map((item) => (
-              <TouchableOpacity
-                key={item.$id}
-                onPress={() => toggleTopic(item.$id)}
-                style={[
-                  styles.topicCard,
-                  selectedTopics.includes(item.$id) && styles.topicCardSelected
-                ]}
-              >
-                <Text style={[
-                  styles.topicName,
-                  selectedTopics.includes(item.$id) && styles.topicNameSelected
-                ]}>
-                  {item.name}
-                </Text>
-                <Text style={[
-                  styles.topicDescription,
-                  selectedTopics.includes(item.$id) && styles.topicDescriptionSelected
-                ]}>
-                  {item.description}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            {topics.map((item) => {
+              const isSelected = selectedTopics.includes(item.$id);
+              return (
+                <TouchableOpacity
+                  key={item.$id}
+                  onPress={() => toggleTopic(item.$id)}
+                  activeOpacity={0.85}
+                  style={[
+                    styles.topicCard,
+                    isSelected && styles.topicCardSelected,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.topicName,
+                      isSelected && styles.topicNameSelected,
+                    ]}
+                  >
+                    {item.name}
+                  </Text>
+                  <Text
+                    style={[
+                      styles.topicDescription,
+                      isSelected && styles.topicDescriptionSelected,
+                    ]}
+                  >
+                    {item.description}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
           <TouchableOpacity
             onPress={() => router.push('/challenge-list')}
-            style={styles.continueButton}
+            style={[
+              styles.continueButton,
+              selectedTopics.length === 0 && styles.continueButtonDisabled,
+            ]}
             disabled={selectedTopics.length === 0}
+            activeOpacity={0.9}
           >
             <Text style={styles.continueButtonText}>
               Continue {selectedTopics.length > 0 && `(${selectedTopics.length} selected)`}
@@ -107,67 +118,88 @@ export default function Topics() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.background.primary,
   },
   content: {
     flex: 1,
   },
   inner: {
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    gap: 20,
   },
   heading: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#ffffff',
-    marginBottom: 8,
+    fontSize: 32,
+    color: COLORS.text.primary,
+    fontFamily: FONTS.heading,
+    letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 16,
-    color: '#cccccc',
-    marginBottom: 24,
+    color: COLORS.text.secondary,
+    fontFamily: FONTS.body,
+    lineHeight: 22,
   },
   topicsContainer: {
-    marginBottom: 24,
+    gap: 16,
+    marginTop: 8,
   },
   topicCard: {
-    padding: 16,
-    marginBottom: 12,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#333333',
+    padding: 20,
+    backgroundColor: COLORS.background.elevated,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border.subtle,
+    gap: 6,
   },
   topicCardSelected: {
-    backgroundColor: '#1e3a5f',
-    borderColor: '#3b82f6',
+    borderColor: COLORS.accent.primary,
+    shadowColor: COLORS.accent.primary,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
   },
   topicName: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#ffffff',
-    marginBottom: 4,
+    fontSize: 20,
+    color: COLORS.text.primary,
+    fontFamily: FONTS.heading,
   },
   topicNameSelected: {
-    color: '#60a5fa',
+    color: COLORS.accent.primary,
   },
   topicDescription: {
     fontSize: 14,
-    color: '#999999',
+    color: COLORS.text.secondary,
+    fontFamily: FONTS.body,
+    lineHeight: 20,
   },
   topicDescriptionSelected: {
-    color: '#93c5fd',
+    color: COLORS.text.primary,
   },
   continueButton: {
-    padding: 16,
-    backgroundColor: '#3b82f6',
-    borderRadius: 8,
-    marginTop: 8,
+    paddingVertical: 18,
+    borderRadius: 999,
+    backgroundColor: COLORS.accent.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 12,
     marginBottom: 32,
+    shadowColor: COLORS.accent.primary,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    elevation: 10,
+  },
+  continueButtonDisabled: {
+    backgroundColor: COLORS.border.default,
+    shadowOpacity: 0,
   },
   continueButtonText: {
-    color: '#ffffff',
+    color: COLORS.background.primary,
     fontSize: 16,
+    fontFamily: FONTS.body,
     fontWeight: '600',
-    textAlign: 'center',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
 });

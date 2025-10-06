@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
-import { TopHeader } from '../components/navigation/TopHeader';
+import { COLORS, FONTS } from '../theme';
 
 interface Challenge {
   id: string;
@@ -59,7 +59,6 @@ export default function ChallengeList() {
 
   return (
     <View style={styles.container}>
-      <TopHeader />
       <View style={styles.content}>
         <Text style={styles.heading}>Challenges</Text>
         <Text style={styles.subtitle}>Select a challenge to begin</Text>
@@ -77,64 +76,75 @@ export default function ChallengeList() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.background.primary,
   },
   content: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    gap: 12,
   },
   heading: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 4,
+    fontSize: 30,
+    fontFamily: FONTS.heading,
+    color: COLORS.text.primary,
   },
   subtitle: {
     fontSize: 16,
-    color: '#6b7280',
-    marginBottom: 16,
+    fontFamily: FONTS.body,
+    color: COLORS.text.secondary,
+    marginBottom: 4,
   },
   listContent: {
-    paddingBottom: 16,
+    paddingVertical: 8,
+    gap: 16,
   },
   challengeCard: {
-    padding: 16,
-    marginBottom: 12,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
+    padding: 20,
+    backgroundColor: COLORS.background.elevated,
+    borderRadius: 18,
     borderWidth: 1,
-    borderColor: '#e5e7eb',
+    borderColor: COLORS.border.subtle,
+    gap: 10,
+    shadowColor: COLORS.overlay.glow,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.2,
+    shadowRadius: 24,
   },
   challengeHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
   },
   challengeType: {
     fontSize: 12,
+    fontFamily: FONTS.body,
     fontWeight: '700',
-    color: '#3b82f6',
+    color: COLORS.accent.secondary,
     textTransform: 'uppercase',
+    letterSpacing: 1.6,
   },
   xpBadge: {
     fontSize: 12,
+    fontFamily: FONTS.body,
     fontWeight: '700',
-    color: '#f97316',
+    color: COLORS.semantic.success,
   },
   challengeTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: '#1f2937',
-    marginBottom: 4,
+    fontSize: 20,
+    fontFamily: FONTS.heading,
+    color: COLORS.text.primary,
+    lineHeight: 26,
   },
   challengeTopic: {
     fontSize: 14,
-    color: '#6b7280',
-    marginBottom: 8,
+    fontFamily: FONTS.body,
+    color: COLORS.text.secondary,
   },
   difficulty: {
     fontSize: 12,
-    color: '#9ca3af',
+    fontFamily: FONTS.body,
+    color: COLORS.text.secondary,
+    letterSpacing: 0.8,
   },
 });

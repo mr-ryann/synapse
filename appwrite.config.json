@@ -326,7 +326,7 @@
         {
             "$id": "topics",
             "$permissions": [
-                "read(\"users\")"
+                "read(\"any\")"
             ],
             "databaseId": "synapse",
             "name": "Topics",

@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'expo-router';
 import { Home, Search, BookOpen, Settings } from 'lucide-react-native';
 import { TabButton } from './TabButton';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { COLORS } from '../../theme';
 
 const TABS = [
   { name: 'home', icon: Home, route: '/', label: 'Home' },
@@ -42,15 +43,23 @@ export const BottomTabBar = React.memo(() => {
         },
       ]}
     >
-      {TABS.map((tab) => (
-        <TabButton
-          key={tab.name}
-          icon={tab.icon}
-          label={tab.label}
-          isActive={pathname === tab.route}
-          onPress={() => router.push(tab.route)}
-        />
-      ))}
+      {TABS.map((tab) => {
+        // Normalize root route: '', '/', or '/index' map to '/'
+        const currentRoute = ['','/','/index'].includes(pathname) ? '/' : pathname;
+        const isActive =
+          (tab.route === '/' && currentRoute === '/') ||
+          (tab.route !== '/' && currentRoute.startsWith(tab.route));
+          
+        return (
+          <TabButton
+            key={tab.name}
+            icon={tab.icon}
+            label={tab.label}
+            isActive={isActive}
+            onPress={() => !isActive && router.push(tab.route)}
+          />
+        );
+      })}
     </View>
   );
 });
@@ -60,14 +69,14 @@ BottomTabBar.displayName = 'BottomTabBar';
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.background.secondary,
     borderTopWidth: 1,
-    borderTopColor: '#333333',
+    borderTopColor: COLORS.border.default,
     paddingTop: 12,
-    shadowColor: '#fff',
+    shadowColor: COLORS.overlay.glow,
     shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 8,
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 12,
   },
 });

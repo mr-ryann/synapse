@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { BackButton } from '../components/navigation/BackButton';
+import { COLORS, FONTS } from '../theme';
 
 interface ChallengeStep {
   id: string;
@@ -59,33 +60,32 @@ export default function ChallengePlayer() {
       case 'article':
       case 'thought-drop':
         return (
-          <View>
-            <Text style={{ fontSize: 18, marginBottom: 16 }}>
-              {currentStep.content}
-            </Text>
+          <View style={styles.stepSection}>
+            <Text style={styles.stepText}>{currentStep.content}</Text>
             {currentStep.type === 'thought-drop' && (
-              <Text>Text input would go here</Text>
+              <Text style={styles.placeholder}>Text input would go here</Text>
             )}
           </View>
         );
       case 'mcq':
         return (
-          <View>
-            <Text style={{ fontSize: 18, marginBottom: 16 }}>
-              {currentStep.content}
-            </Text>
+          <View style={styles.stepSection}>
+            <Text style={styles.stepText}>{currentStep.content}</Text>
             {currentStep.options?.map((option, index) => (
               <TouchableOpacity
                 key={index}
-                style={{
-                  padding: 12,
-                  margin: 4,
-                  backgroundColor: selectedOption === option ? '#007AFF' : '#f0f0f0',
-                  borderRadius: 8,
-                }}
+                style={[
+                  styles.option,
+                  selectedOption === option && styles.optionSelected,
+                ]}
                 onPress={() => setSelectedOption(option)}
               >
-                <Text style={{ color: selectedOption === option ? 'white' : 'black' }}>
+                <Text
+                  style={[
+                    styles.optionText,
+                    selectedOption === option && styles.optionTextSelected,
+                  ]}
+                >
                   {option}
                 </Text>
               </TouchableOpacity>
@@ -128,41 +128,95 @@ export default function ChallengePlayer() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.background.primary,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: COLORS.border.default,
+    backgroundColor: COLORS.background.secondary,
   },
   progress: {
-    fontSize: 16,
+    fontSize: 14,
+    fontFamily: FONTS.body,
     fontWeight: '600',
-    color: '#1f2937',
+    color: COLORS.text.secondary,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
   content: {
     flex: 1,
   },
   inner: {
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    gap: 16,
+  },
+  stepSection: {
+    gap: 12,
+  },
+  stepText: {
+    fontSize: 20,
+    fontFamily: FONTS.heading,
+    color: COLORS.text.primary,
+    lineHeight: 26,
+  },
+  placeholder: {
+    fontSize: 16,
+    fontFamily: FONTS.body,
+    color: COLORS.text.secondary,
+    fontStyle: 'italic',
+  },
+  option: {
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border.default,
+    backgroundColor: COLORS.background.elevated,
+    marginBottom: 10,
+  },
+  optionSelected: {
+    borderColor: COLORS.accent.primary,
+    backgroundColor: 'rgba(224, 59, 140, 0.12)',
+  },
+  optionText: {
+    fontSize: 16,
+    fontFamily: FONTS.body,
+    color: COLORS.text.secondary,
+  },
+  optionTextSelected: {
+    color: COLORS.text.primary,
   },
   footer: {
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: COLORS.border.default,
+    backgroundColor: COLORS.background.secondary,
   },
   nextButton: {
-    padding: 16,
-    backgroundColor: '#3b82f6',
-    borderRadius: 8,
+    paddingVertical: 16,
+    borderRadius: 999,
+    backgroundColor: COLORS.accent.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: COLORS.accent.primary,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
+    elevation: 12,
   },
   nextButtonText: {
-    color: '#ffffff',
+    color: COLORS.background.primary,
     fontSize: 16,
+    fontFamily: FONTS.body,
     fontWeight: '600',
-    textAlign: 'center',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 });

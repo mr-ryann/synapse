@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { TopHeader } from '../components/navigation/TopHeader';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
+import { COLORS, FONTS } from '../theme';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -15,7 +15,6 @@ export default function SettingsScreen() {
 
   return (
     <View style={styles.container}>
-      <TopHeader />
       <ScrollView style={styles.content}>
         <View style={styles.inner}>
           <Text style={styles.heading}>Settings</Text>
@@ -70,50 +69,55 @@ export default function SettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.background.primary,
   },
   content: {
     flex: 1,
   },
   inner: {
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    gap: 20,
   },
   heading: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#ffffff',
-    marginBottom: 8,
+    fontSize: 30,
+    color: COLORS.text.primary,
+    fontFamily: FONTS.heading,
   },
   description: {
     fontSize: 16,
-    color: '#cccccc',
-    marginBottom: 24,
+    color: COLORS.text.secondary,
+    fontFamily: FONTS.body,
   },
   section: {
-    marginBottom: 24,
+    gap: 12,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: '600',
-    color: '#ffffff',
-    marginBottom: 12,
+    color: COLORS.text.primary,
+    fontFamily: FONTS.heading,
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
   },
   settingItem: {
     paddingVertical: 16,
-    paddingHorizontal: 12,
-    backgroundColor: '#1a1a1a',
-    borderRadius: 8,
-    marginBottom: 8,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.background.elevated,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: COLORS.border.subtle,
   },
   settingText: {
     fontSize: 16,
-    color: '#ffffff',
+    color: COLORS.text.primary,
+    fontFamily: FONTS.body,
   },
   dangerText: {
-    color: '#ef4444',
+    color: COLORS.semantic.error,
   },
   versionText: {
     fontSize: 14,
-    color: '#999999',
+    color: COLORS.text.secondary,
+    fontFamily: FONTS.body,
   },
 });

@@ -5,8 +5,9 @@
   "scripts": {
     "ios": "cd app && npm run ios",
     "android": "cd app && npm run android",
-    "start": "cd app && npm start",
-    "seed:challenges": "tsx scripts/seed-challenges.ts"
+  "start": "npm --prefix app run start --",
+  "seed:challenges": "tsx scripts/seed-challenges.ts",
+  "seed:topics": "tsx scripts/seed-topics.ts"
   },
   "dependencies": {
     "expo": "^54.0.12",

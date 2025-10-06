@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { functions } from '../lib/appwrite';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { COLORS, FONTS } from '../theme';
 
 export default function ResetPasswordConfirm() {
   const [password, setPassword] = useState('');
@@ -83,6 +84,8 @@ export default function ResetPasswordConfirm() {
         secureTextEntry
         style={styles.input}
         autoCapitalize="none"
+        placeholderTextColor={COLORS.text.secondary}
+        selectionColor={COLORS.accent.primary}
       />
       
       <TextInput
@@ -92,6 +95,8 @@ export default function ResetPasswordConfirm() {
         secureTextEntry
         style={styles.input}
         autoCapitalize="none"
+        placeholderTextColor={COLORS.text.secondary}
+        selectionColor={COLORS.accent.primary}
       />
       
       <TouchableOpacity 
@@ -111,41 +116,55 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     justifyContent: 'center',
-    padding: 20,
-    backgroundColor: '#fff',
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+    backgroundColor: COLORS.background.primary,
+    gap: 16,
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 10,
+    fontFamily: FONTS.heading,
+    marginBottom: 8,
     textAlign: 'center',
+    color: COLORS.text.primary,
+    letterSpacing: 0.6,
   },
   subtitle: {
     fontSize: 16,
-    color: '#666',
-    marginBottom: 30,
+    fontFamily: FONTS.body,
+    color: COLORS.text.secondary,
+    marginBottom: 28,
     textAlign: 'center',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 15,
-    marginBottom: 15,
-    borderRadius: 8,
+    borderColor: COLORS.border.subtle,
+    backgroundColor: COLORS.background.secondary,
+    color: COLORS.text.primary,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    marginBottom: 16,
+    borderRadius: 16,
     fontSize: 16,
+    fontFamily: FONTS.body,
   },
   button: {
-    padding: 15,
-    borderRadius: 8,
+    paddingVertical: 18,
+    borderRadius: 18,
     alignItems: 'center',
-    marginBottom: 15,
+    marginTop: 12,
   },
   primaryButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: COLORS.accent.primary,
+    shadowColor: COLORS.overlay.glow,
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
   },
   buttonText: {
-    color: '#fff',
+    color: COLORS.text.primary,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: FONTS.heading,
+    letterSpacing: 0.8,
   },
 });

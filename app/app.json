@@ -9,9 +9,9 @@
     "newArchEnabled": true,
     "scheme": "synapse",
     "splash": {
-      "image": "./assets/splash-icon.png",
+      "image": "./assets/full_logo.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#000000"
     },
     "plugins": [
       "expo-router"
@@ -21,8 +21,8 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": true

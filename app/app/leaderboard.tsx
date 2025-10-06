@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
-import { TopHeader } from '../components/navigation/TopHeader';
+import { COLORS, FONTS } from '../theme';
 
 interface LeaderboardEntry {
   id: string;
@@ -32,7 +32,6 @@ export default function Leaderboard() {
 
   return (
     <View style={styles.container}>
-      <TopHeader />
       <View style={styles.content}>
         <Text style={styles.heading}>Leaderboard</Text>
         <FlatList
@@ -49,40 +48,48 @@ export default function Leaderboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.background.primary,
   },
   content: {
     flex: 1,
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    gap: 16,
   },
   heading: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 16,
+    fontSize: 30,
+    fontFamily: FONTS.heading,
+    color: COLORS.text.primary,
   },
   listContent: {
-    paddingBottom: 16,
+    paddingVertical: 8,
+    gap: 14,
   },
   entryCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
-    marginBottom: 8,
-    backgroundColor: '#f9fafb',
-    borderRadius: 8,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.background.elevated,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: COLORS.border.subtle,
+    shadowColor: COLORS.overlay.glow,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.18,
+    shadowRadius: 18,
   },
   rank: {
-    width: 40,
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#3b82f6',
+    width: 48,
+    fontSize: 22,
+    fontFamily: FONTS.heading,
+    color: COLORS.accent.primary,
   },
   name: {
     flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#1f2937',
+    fontSize: 18,
+    fontFamily: FONTS.heading,
+    color: COLORS.text.primary,
   },
   stats: {
     flexDirection: 'row',
@@ -90,6 +97,7 @@ const styles = StyleSheet.create({
   },
   stat: {
     fontSize: 14,
-    color: '#6b7280',
+    fontFamily: FONTS.body,
+    color: COLORS.text.secondary,
   },
 });

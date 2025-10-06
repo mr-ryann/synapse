@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
-import { View, Text, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, ActivityIndicator, Alert, StyleSheet } from 'react-native';
 import { functions } from '../lib/appwrite';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { COLORS, FONTS } from '../theme';
 
 export default function EmailVerified() {
   const router = useRouter();
@@ -61,9 +62,26 @@ export default function EmailVerified() {
   }, [userId, secret, router]);
 
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <ActivityIndicator size="large" color="#007AFF" />
-      <Text style={{ marginTop: 20 }}>Verifying your email...</Text>
+    <View style={styles.container}>
+      <ActivityIndicator size="large" color={COLORS.accent.primary} />
+      <Text style={styles.status}>Verifying your email...</Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.background.primary,
+    padding: 24,
+  },
+  status: {
+    marginTop: 24,
+    color: COLORS.text.primary,
+    fontFamily: FONTS.body,
+    fontSize: 16,
+    letterSpacing: 0.3,
+  },
+});

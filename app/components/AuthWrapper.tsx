@@ -27,6 +27,10 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
             selectedTopics: [], // Will be loaded from database
             level: 1,
             xp: 0,
+            currentStreak: 0,
+            longestStreak: 0,
+            totalChallengesCompleted: 0,
+            onboardingCompleted: false,
             streak: 0,
             preferences: {
               topics: [],
@@ -56,7 +60,7 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
         alignItems: 'center',
         backgroundColor: COLORS.background.primary,
       }}>
-        <ActivityIndicator size="large" color={COLORS.primary[500]} />
+  <ActivityIndicator size="large" color={COLORS.accent.primary} />
       </View>
     );
   }

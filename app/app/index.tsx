@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { View, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUserStore } from '../stores';
-import { COLORS } from '../theme/colors';
+import { COLORS } from '../theme';
 
 export default function Home() {
   const router = useRouter();
@@ -30,7 +30,7 @@ export default function Home() {
       alignItems: 'center',
       backgroundColor: COLORS.background.primary,
     }}>
-      <ActivityIndicator size="large" color={COLORS.primary[500]} />
+      <ActivityIndicator size="large" color={COLORS.accent.primary} />
     </View>
   );
 }

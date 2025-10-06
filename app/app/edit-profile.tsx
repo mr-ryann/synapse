@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, Alert, StyleSheet, ScrollView } from 'react-native';
 import { account, databases } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
+import { COLORS, FONTS } from '../theme';
 
 export default function EditProfile() {
   const [user, setUser] = useState<any>(null);
@@ -68,6 +69,8 @@ export default function EditProfile() {
         value={name}
         onChangeText={setName}
         style={styles.input}
+        placeholderTextColor={COLORS.text.secondary}
+        selectionColor={COLORS.accent.primary}
       />
       
       <Text style={styles.label}>Email</Text>
@@ -76,6 +79,7 @@ export default function EditProfile() {
         value={email}
         editable={false}
         style={[styles.input, styles.inputDisabled]}
+        placeholderTextColor={COLORS.text.secondary}
       />
       <Text style={styles.helperText}>Email cannot be changed here</Text>
       
@@ -87,6 +91,8 @@ export default function EditProfile() {
         multiline
         numberOfLines={4}
         style={[styles.input, styles.textArea]}
+        placeholderTextColor={COLORS.text.secondary}
+        selectionColor={COLORS.accent.primary}
       />
       
       <TouchableOpacity 
@@ -109,60 +115,78 @@ export default function EditProfile() {
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-    padding: 20,
-    backgroundColor: '#fff',
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+    backgroundColor: COLORS.background.primary,
+    gap: 12,
   },
   title: {
     fontSize: 32,
-    fontWeight: 'bold',
-    marginBottom: 30,
+    fontFamily: FONTS.heading,
+    marginBottom: 28,
     textAlign: 'center',
+    color: COLORS.text.primary,
+    letterSpacing: 0.6,
   },
   label: {
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 14,
+    fontFamily: FONTS.body,
     marginBottom: 8,
-    color: '#333',
+    color: COLORS.text.secondary,
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    padding: 15,
-    marginBottom: 10,
-    borderRadius: 8,
+    borderColor: COLORS.border.subtle,
+    backgroundColor: COLORS.background.secondary,
+    color: COLORS.text.primary,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    marginBottom: 12,
+    borderRadius: 16,
     fontSize: 16,
+    fontFamily: FONTS.body,
   },
   inputDisabled: {
-    backgroundColor: '#f5f5f5',
-    color: '#999',
+    backgroundColor: COLORS.background.elevated,
+    color: COLORS.text.secondary,
+    opacity: 0.7,
   },
   textArea: {
-    height: 100,
+    minHeight: 140,
     textAlignVertical: 'top',
   },
   helperText: {
     fontSize: 12,
-    color: '#999',
-    marginBottom: 20,
+    color: COLORS.text.muted,
+    marginBottom: 24,
+    fontFamily: FONTS.body,
   },
   button: {
-    padding: 15,
-    borderRadius: 8,
+    paddingVertical: 18,
+    borderRadius: 18,
     alignItems: 'center',
-    marginTop: 20,
-    marginBottom: 15,
+    marginTop: 16,
+    marginBottom: 20,
   },
   primaryButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: COLORS.accent.primary,
+    shadowColor: COLORS.overlay.glow,
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
   },
   buttonText: {
-    color: '#fff',
+    color: COLORS.text.primary,
     fontSize: 16,
-    fontWeight: '600',
+    fontFamily: FONTS.heading,
+    letterSpacing: 0.8,
   },
   linkText: {
     textAlign: 'center',
-    marginTop: 10,
-    color: '#007AFF',
+    marginTop: 8,
+    color: COLORS.accent.tertiary,
+    fontFamily: FONTS.body,
   },
 });

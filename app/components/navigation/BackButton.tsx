@@ -2,6 +2,7 @@ import React from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ArrowLeft } from 'lucide-react-native';
+import { COLORS } from '../../theme';
 
 export const BackButton = React.memo(() => {
   const router = useRouter();
@@ -11,7 +12,7 @@ export const BackButton = React.memo(() => {
       onPress={() => router.back()}
       style={styles.button}
     >
-      <ArrowLeft size={24} color="#1f2937" />
+      <ArrowLeft size={24} color={COLORS.text.primary} />
     </Pressable>
   );
 });
@@ -22,6 +23,8 @@ const styles = StyleSheet.create({
   button: {
     padding: 8,
     borderRadius: 8,
-    backgroundColor: '#f9fafb',
+    backgroundColor: COLORS.background.secondary,
+    borderWidth: 1,
+    borderColor: COLORS.border.default,
   },
 });

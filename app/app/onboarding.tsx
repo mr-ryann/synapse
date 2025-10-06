@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { databases, account } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
-import { TopHeader } from '../components/navigation/TopHeader';
+import { COLORS, FONTS } from '../theme';
 
 interface Topic {
   $id: string;
@@ -66,7 +66,6 @@ export default function Onboarding() {
 
   return (
     <View style={styles.container}>
-      <TopHeader />
 
       <FlatList
         data={topics}
@@ -130,77 +129,95 @@ export default function Onboarding() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: COLORS.background.primary,
   },
   header: {
-    paddingHorizontal: 20,
-    paddingTop: 24,
-    paddingBottom: 12,
+    paddingHorizontal: 24,
+    paddingTop: 28,
+    paddingBottom: 16,
+    gap: 8,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    color: '#fff',
+    fontSize: 32,
+    fontFamily: FONTS.heading,
+    color: COLORS.text.primary,
+    letterSpacing: 0.5,
   },
   subtitle: {
     fontSize: 16,
-    color: '#cccccc',
-    marginBottom: 10,
+    fontFamily: FONTS.body,
+    color: COLORS.text.secondary,
+    lineHeight: 22,
   },
   counter: {
     fontSize: 14,
-    color: '#3b82f6',
-    fontWeight: '600',
+    fontFamily: FONTS.body,
+    color: COLORS.accent.tertiary,
+    letterSpacing: 1,
   },
   grid: {
-    paddingHorizontal: 10,
+    paddingHorizontal: 16,
     paddingBottom: 32,
+    gap: 12,
   },
   topicCard: {
     flex: 1,
-    margin: 5,
-    padding: 15,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#2a2a2a',
-    backgroundColor: '#1a1a1a',
-    minHeight: 120,
+    margin: 6,
+    padding: 18,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: COLORS.border.subtle,
+    backgroundColor: COLORS.background.elevated,
+    minHeight: 140,
+    gap: 8,
+    shadowColor: COLORS.overlay.glow,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
   },
   topicCardSelected: {
-    borderColor: '#3b82f6',
-    backgroundColor: '#1e3a5f',
+    borderColor: COLORS.accent.primary,
+    backgroundColor: COLORS.background.secondary,
+    shadowColor: COLORS.accent.primary,
+    shadowOpacity: 0.25,
   },
   topicName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#ffffff',
+    fontSize: 18,
+    fontFamily: FONTS.heading,
+    color: COLORS.text.primary,
   },
   topicNameSelected: {
-    color: '#60a5fa',
+    color: COLORS.accent.primary,
   },
   topicDescription: {
-    fontSize: 12,
-    color: '#999999',
-    lineHeight: 16,
+    fontSize: 13,
+    fontFamily: FONTS.body,
+    color: COLORS.text.secondary,
+    lineHeight: 18,
   },
   topicDescriptionSelected: {
-    color: '#93c5fd',
+    color: COLORS.text.primary,
   },
   continueButton: {
-    backgroundColor: '#3b82f6',
-    padding: 18,
-    margin: 20,
-    borderRadius: 12,
+    backgroundColor: COLORS.accent.primary,
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    margin: 24,
+    borderRadius: 18,
     alignItems: 'center',
+    shadowColor: COLORS.accent.primary,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.35,
+    shadowRadius: 24,
   },
   continueButtonDisabled: {
-    backgroundColor: '#333333',
+    backgroundColor: COLORS.border.subtle,
+    shadowOpacity: 0,
   },
   continueButtonText: {
-    color: '#fff',
+    color: COLORS.text.primary,
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: FONTS.heading,
+    letterSpacing: 0.8,
   },
 });

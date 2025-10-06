@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Button, Alert, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, Alert, ScrollView, StyleSheet } from 'react-native';
 import { functions, account } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
-import { TopHeader } from '../components/navigation/TopHeader';
+import { COLORS, FONTS } from '../theme';
 
 export default function Analytics() {
   const [analytics, setAnalytics] = useState<any>(null);
@@ -42,7 +42,6 @@ export default function Analytics() {
 
   return (
     <View style={styles.container}>
-      <TopHeader />
       <ScrollView style={styles.content}>
         <View style={styles.inner}>
           <Text style={styles.heading}>Analytics</Text>
@@ -64,7 +63,9 @@ export default function Analytics() {
           ) : (
             <Text style={styles.loadingText}>Loading...</Text>
           )}
-          <Button title="Back to Question" onPress={() => router.push('/question')} />
+          <TouchableOpacity style={styles.primaryButton} onPress={() => router.push('/question')}>
+            <Text style={styles.primaryButtonText}>Back to Question</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -74,43 +75,72 @@ export default function Analytics() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: COLORS.background.primary,
   },
   content: {
     flex: 1,
   },
   inner: {
-    padding: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 24,
+    gap: 20,
   },
   heading: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#1f2937',
-    marginBottom: 24,
+    fontSize: 30,
+    fontFamily: FONTS.heading,
+    color: COLORS.text.primary,
   },
   statsContainer: {
-    marginBottom: 24,
+    gap: 16,
   },
   statCard: {
-    backgroundColor: '#f9fafb',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 12,
+    backgroundColor: COLORS.background.elevated,
+    padding: 20,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: COLORS.border.subtle,
+    shadowColor: COLORS.overlay.glow,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.18,
+    shadowRadius: 20,
   },
   statLabel: {
     fontSize: 14,
-    color: '#6b7280',
+    fontFamily: FONTS.body,
+    color: COLORS.text.secondary,
     marginBottom: 4,
+    textTransform: 'uppercase',
+    letterSpacing: 1.4,
   },
   statValue: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: '#1f2937',
+    fontSize: 28,
+    fontFamily: FONTS.heading,
+    color: COLORS.text.primary,
   },
   loadingText: {
     fontSize: 16,
-    color: '#6b7280',
+    fontFamily: FONTS.body,
+    color: COLORS.text.secondary,
     textAlign: 'center',
-    marginVertical: 24,
+    marginVertical: 32,
+  },
+  primaryButton: {
+    alignSelf: 'flex-start',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 999,
+    backgroundColor: COLORS.accent.primary,
+    shadowColor: COLORS.accent.primary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 18,
+  },
+  primaryButtonText: {
+    fontSize: 14,
+    fontFamily: FONTS.body,
+    fontWeight: '600',
+    color: COLORS.background.primary,
+    letterSpacing: 1,
+    textTransform: 'uppercase',
   },
 });

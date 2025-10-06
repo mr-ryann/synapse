@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { databases, account } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
-import { Query } from 'appwrite';
+import { COLORS, FONTS } from '../theme';
 
 interface Topic {
   $id: string;
@@ -28,8 +28,7 @@ export default function TopicsWithCategories() {
       try {
         const userData = await account.get();
         setUser(userData);
-        
-        // Load selected topics from user profile
+
         const userDoc = await databases.getDocument('synapse', 'users', userData.$id);
         setSelectedTopics(userDoc.selectedTopics || []);
       } catch (e) {
@@ -43,8 +42,7 @@ export default function TopicsWithCategories() {
         const res = await databases.listDocuments('synapse', 'topics');
         const topicsList = res.documents as unknown as Topic[];
         setTopics(topicsList);
-        
-        // Group topics by category
+
         const grouped: GroupedTopics = {};
         topicsList.forEach(topic => {
           const category = topic.category || 'Uncategorized';
@@ -59,17 +57,18 @@ export default function TopicsWithCategories() {
       }
     };
     fetchTopics();
-  }, []);
+  }, [router]);
 
   const toggleTopic = async (topicId: string) => {
     const newSelected = selectedTopics.includes(topicId)
       ? selectedTopics.filter(id => id !== topicId)
       : [...selectedTopics, topicId];
     setSelectedTopics(newSelected);
-    
+
     try {
+      if (!user) return;
       await databases.updateDocument('synapse', 'users', user.$id, {
-        selectedTopics: newSelected
+        selectedTopics: newSelected,
       });
     } catch (e) {
       console.error('Error updating topics:', e);
@@ -86,21 +85,15 @@ export default function TopicsWithCategories() {
             <TouchableOpacity
               key={topic.$id}
               onPress={() => toggleTopic(topic.$id)}
-              style={[
-                styles.topicCard,
-                isSelected && styles.topicCardSelected
-              ]}
+              style={[styles.topicCard, isSelected && styles.topicCardSelected]}
             >
-              <Text style={[
-                styles.topicName,
-                isSelected && styles.topicNameSelected
-              ]}>
+              <Text style={[styles.topicName, isSelected && styles.topicNameSelected]}>
                 {topic.name}
               </Text>
-              <Text style={[
-                styles.topicDescription,
-                isSelected && styles.topicDescriptionSelected
-              ]}>
+              <Text
+                style={[styles.topicDescription, isSelected && styles.topicDescriptionSelected]}
+                numberOfLines={3}
+              >
                 {topic.description}
               </Text>
             </TouchableOpacity>
@@ -114,9 +107,7 @@ export default function TopicsWithCategories() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Your Topics</Text>
-        <Text style={styles.counter}>
-          {selectedTopics.length} selected
-        </Text>
+        <Text style={styles.counter}>{selectedTopics.length} selected</Text>
       </View>
 
       <FlatList
@@ -129,6 +120,7 @@ export default function TopicsWithCategories() {
       <TouchableOpacity
         style={styles.continueButton}
         onPress={() => router.push('/question')}
+        disabled={loading}
       >
         <Text style={styles.continueButtonText}>Continue</Text>
       </TouchableOpacity>
@@ -139,82 +131,100 @@ export default function TopicsWithCategories() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.background.primary,
   },
   header: {
-    padding: 20,
-    paddingTop: 60,
+    paddingHorizontal: 24,
+    paddingTop: 48,
+    paddingBottom: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-end',
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
+    fontSize: 30,
+    fontFamily: FONTS.heading,
+    color: COLORS.text.primary,
+    letterSpacing: 0.6,
   },
   counter: {
     fontSize: 14,
-    color: '#007AFF',
-    fontWeight: '600',
+    fontFamily: FONTS.body,
+    color: COLORS.accent.tertiary,
+    letterSpacing: 1,
   },
   listContent: {
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingBottom: 32,
+    gap: 28,
   },
   categorySection: {
-    marginBottom: 30,
+    gap: 16,
   },
   categoryTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    color: '#333',
+    fontFamily: FONTS.heading,
+    color: COLORS.text.primary,
   },
   topicsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginHorizontal: -5,
+    gap: 12,
+    marginHorizontal: -6,
   },
   topicCard: {
     width: '48%',
-    margin: '1%',
-    padding: 15,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: '#ddd',
-    backgroundColor: '#fff',
-    minHeight: 120,
+    padding: 18,
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: COLORS.border.subtle,
+    backgroundColor: COLORS.background.secondary,
+    minHeight: 130,
+    gap: 8,
+    shadowColor: COLORS.overlay.glow,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
   },
   topicCardSelected: {
-    borderColor: '#007AFF',
-    backgroundColor: '#E3F2FD',
+    borderColor: COLORS.accent.primary,
+    backgroundColor: COLORS.background.elevated,
+    shadowColor: COLORS.accent.primary,
+    shadowOpacity: 0.35,
   },
   topicName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
-    color: '#333',
+    fontSize: 17,
+    fontFamily: FONTS.heading,
+    color: COLORS.text.primary,
   },
   topicNameSelected: {
-    color: '#007AFF',
+    color: COLORS.accent.primary,
   },
   topicDescription: {
-    fontSize: 12,
-    color: '#666',
-    lineHeight: 16,
+    fontSize: 13,
+    fontFamily: FONTS.body,
+    color: COLORS.text.secondary,
+    lineHeight: 18,
   },
   topicDescriptionSelected: {
-    color: '#0066CC',
+    color: COLORS.text.primary,
   },
   continueButton: {
-    backgroundColor: '#007AFF',
-    padding: 18,
-    margin: 20,
-    borderRadius: 12,
+    backgroundColor: COLORS.accent.primary,
+    paddingVertical: 20,
+    marginHorizontal: 24,
+    marginBottom: 28,
+    borderRadius: 18,
     alignItems: 'center',
+    shadowColor: COLORS.overlay.glow,
+    shadowOffset: { width: 0, height: 18 },
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
   },
   continueButtonText: {
-    color: '#fff',
+    color: COLORS.text.primary,
     fontSize: 18,
-    fontWeight: '600',
+    fontFamily: FONTS.heading,
+    letterSpacing: 0.8,
   },
 });

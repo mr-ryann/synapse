@@ -4,14 +4,17 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AuthWrapper } from '../components/AuthWrapper';
 import { BottomTabBar } from '../components/navigation/BottomTabBar';
+import { TopHeader } from '../components/navigation/TopHeader';
+import { COLORS } from '../theme';
 
 export default function Layout() {
   return (
     <SafeAreaProvider>
-      <GestureHandlerRootView style={{ flex: 1, backgroundColor: '#000000' }}>
+      <GestureHandlerRootView style={{ flex: 1, backgroundColor: COLORS.background.primary }}>
         <AuthWrapper>
-          <View style={{ flex: 1, backgroundColor: '#000000' }}>
-            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: '#000000' } }}>
+          <View style={{ flex: 1, backgroundColor: COLORS.background.primary }}>
+            <TopHeader />
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: COLORS.background.primary } }}>
               <Stack.Screen name="index" options={{ title: 'Home' }} />
               <Stack.Screen name="login" options={{ title: 'Login' }} />
               <Stack.Screen name="signup" options={{ title: 'Sign Up' }} />

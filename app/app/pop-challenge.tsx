@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { View, Text, Button, Alert, Modal, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
 import { functions, account } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
+import { COLORS, FONTS } from '../theme';
 
 export default function Question() {
   const [question, setQuestion] = useState<any>(null);
@@ -65,9 +66,9 @@ export default function Question() {
     try {
       const res = await functions.createExecution(
         'get-ai-hint',
-        JSON.stringify({ 
-          questionText: question.questionText,
-          userId: user.$id 
+        JSON.stringify({
+          questionId: question.$id,
+          userQuery: ''
         })
       );
       const data = JSON.parse(res.responseBody);
@@ -181,36 +182,46 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: COLORS.overlay.scrim,
   },
   modalContent: {
-    backgroundColor: 'white',
-    padding: 20,
-    borderRadius: 10,
-    width: '80%',
-    maxHeight: '70%',
+    backgroundColor: COLORS.background.secondary,
+    paddingHorizontal: 24,
+    paddingVertical: 28,
+    borderRadius: 20,
+    width: '86%',
+    maxHeight: '72%',
+    gap: 16,
+    shadowColor: COLORS.overlay.glow,
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
   },
   modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
+    fontSize: 22,
+    fontFamily: FONTS.heading,
+    color: COLORS.text.primary,
   },
   modalText: {
     fontSize: 16,
-    marginBottom: 20,
+    fontFamily: FONTS.body,
+    color: COLORS.text.secondary,
     lineHeight: 24,
   },
   feedbackContainer: {
     marginBottom: 20,
-    padding: 15,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
+    padding: 18,
+    backgroundColor: COLORS.background.elevated,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border.subtle,
   },
   feedbackLabel: {
     fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 10,
-    color: '#333',
+    fontFamily: FONTS.body,
+    marginBottom: 12,
+    color: COLORS.text.primary,
+    letterSpacing: 0.5,
   },
   feedbackButtons: {
     flexDirection: 'row',
@@ -226,11 +237,12 @@ const styles = StyleSheet.create({
   },
   feedbackText: {
     fontSize: 12,
-    color: '#666',
+    fontFamily: FONTS.body,
+    color: COLORS.text.secondary,
   },
   feedbackConfirm: {
-    color: 'green',
-    fontWeight: '600',
+    color: COLORS.semantic.success,
+    fontFamily: FONTS.body,
     marginBottom: 15,
     textAlign: 'center',
   },
