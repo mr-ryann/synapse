@@ -19,7 +19,7 @@ Most apps just spit out answers. Synapse is different; we help you come up with 
 
 To be clear: we're not anti-AI, we're just against over-relying on it. 
 
-# We believe AI should be like a calculator --a powerful tool that helps you focus on the big picture, not a replacement for your own thinking. 🛠️
+** We believe AI should be like a calculator --a powerful tool that helps you focus on the big picture, not a replacement for your own thinking. 🛠️**
 
 Our whole philosophy is simple: Use AI to help your brain grow, not to replace it. Our AI acts as a friendly guide, throwing you interesting challenges that don't have a single right answer and giving you a cool space to think it all through.
 
