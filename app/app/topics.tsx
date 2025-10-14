@@ -30,7 +30,6 @@ export default function Topics() {
         // Fetch all challenges and group by topicName to get unique topics with counts
         const challengesResponse = await databases.listDocuments('synapse', 'challenges');
         const challenges = challengesResponse.documents;
-        console.log('Fetched challenges:', challenges.length);
         
         // Group challenges by topicName and count them
         const topicMap = new Map<string, number>();
@@ -47,10 +46,8 @@ export default function Topics() {
           count,
         }));
         
-        console.log('Derived topics:', derivedTopics);
         setTopics(derivedTopics);
       } catch (e) {
-        console.error('Error loading topics:', e);
         router.push('/login');
       }
     };
@@ -81,37 +78,38 @@ export default function Topics() {
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.content}>
-        <View style={styles.inner}>
-          <Text style={styles.heading}>Choose a Topic</Text>
-          <Text style={styles.subtitle}>
-            Select a topic to start your critical thinking challenge
-          </Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.carouselContainer}
-            snapToInterval={CARD_WIDTH + 16}
-            decelerationRate="fast"
-          >
-            {topics.map((item) => (
-              <TouchableOpacity
-                key={item.name}
-                onPress={() => selectTopicForChallenge(item.name)}
-                activeOpacity={0.85}
-                style={styles.topicCard}
-              >
-                <Text style={styles.topicName}>
-                  {item.name}
-                </Text>
-                <Text style={styles.topicCount}>
-                  {item.count} challenges
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-      </ScrollView>
+      <View style={styles.headerSection}>
+        <Text style={styles.heading}>Choose a Topic</Text>
+        <Text style={styles.subtitle}>
+          Select a topic to start your critical thinking challenge
+        </Text>
+      </View>
+      
+      <View style={styles.carouselSection}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.carouselContainer}
+          snapToInterval={CARD_WIDTH + 16}
+          decelerationRate="fast"
+        >
+          {topics.map((item) => (
+            <TouchableOpacity
+              key={item.name}
+              onPress={() => selectTopicForChallenge(item.name)}
+              activeOpacity={0.85}
+              style={styles.topicCard}
+            >
+              <Text style={styles.topicName}>
+                {item.name}
+              </Text>
+              <Text style={styles.topicCount}>
+                {item.count} challenges
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
+      </View>
     </View>
   );
 }
@@ -121,19 +119,17 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background.primary,
   },
-  content: {
-    flex: 1,
-  },
-  inner: {
+  headerSection: {
     paddingHorizontal: 20,
-    paddingVertical: 24,
-    gap: 20,
+    paddingTop: 24,
+    paddingBottom: 20,
   },
   heading: {
     fontSize: 32,
     color: COLORS.text.primary,
     fontFamily: FONTS.heading,
     letterSpacing: 0.5,
+    marginBottom: 12,
   },
   subtitle: {
     fontSize: 16,
@@ -141,32 +137,39 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     lineHeight: 22,
   },
+  carouselSection: {
+    flex: 1,
+    justifyContent: 'center',
+    paddingVertical: 40,
+  },
   carouselContainer: {
     paddingHorizontal: 20,
     gap: 16,
   },
   topicCard: {
     width: CARD_WIDTH,
-    padding: 24,
+    padding: 32,
     backgroundColor: COLORS.background.elevated,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: COLORS.border.subtle,
-    gap: 12,
+    gap: 16,
     shadowColor: COLORS.accent.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.15,
     shadowRadius: 16,
     elevation: 8,
+    minHeight: 180,
+    justifyContent: 'center',
   },
   topicName: {
-    fontSize: 24,
+    fontSize: 28,
     color: COLORS.text.primary,
     fontFamily: FONTS.heading,
     fontWeight: '600',
   },
   topicCount: {
-    fontSize: 16,
+    fontSize: 18,
     color: COLORS.text.secondary,
     fontFamily: FONTS.body,
   },

@@ -17,7 +17,9 @@ npm-debug.*
 *.key
 *.mobileprovision
 *.orig.*
+
 gluestack-starter/
 scripts/
 questions.json
+.github/
 

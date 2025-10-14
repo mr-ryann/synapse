@@ -26,6 +26,17 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
             const userDoc = await databases.getDocument('synapse', 'users', user.$id);
             
             // User document exists, use it
+            let parsedPreferences = { topics: [], difficulty: 1 };
+            try {
+              if (typeof userDoc.preferences === 'string') {
+                parsedPreferences = JSON.parse(userDoc.preferences);
+              } else if (typeof userDoc.preferences === 'object') {
+                parsedPreferences = userDoc.preferences;
+              }
+            } catch (e) {
+              // Error parsing preferences, using defaults
+            }
+
             const userData = {
               $id: userDoc.$id,
               email: userDoc.email,
@@ -38,10 +49,7 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
               totalChallengesCompleted: 0,
               onboardingCompleted: (userDoc.selectedTopics && userDoc.selectedTopics.length > 0) || false,
               streak: userDoc.streak || 0,
-              preferences: userDoc.preferences ? JSON.parse(userDoc.preferences) : {
-                topics: [],
-                difficulty: 1,
-              },
+              preferences: parsedPreferences,
             };
             setUser(userData);
           } catch (docError: any) {
@@ -90,7 +98,6 @@ export const AuthWrapper: React.FC<AuthWrapperProps> = ({ children }) => {
               setUser(userData);
             } else {
               // Some other error occurred
-              console.error('Error fetching user document:', docError);
               clearUser();
             }
           }

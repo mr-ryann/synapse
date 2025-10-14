@@ -59,6 +59,7 @@ export default function RootLayout() {
             
             {/* Onboarding screens */}
             <Stack.Screen name="topics" options={{ title: 'Topics' }} />
+            <Stack.Screen name="topics-settings" options={{ title: 'Manage Topics' }} />
             <Stack.Screen name="onboarding" options={{ title: 'Onboarding' }} />
             
             {/* Auth screens */}

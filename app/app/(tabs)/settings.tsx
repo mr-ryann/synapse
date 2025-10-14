@@ -40,7 +40,10 @@ export default function SettingsScreen() {
             <Pressable style={styles.settingItem}>
               <Text style={styles.settingText}>Notifications</Text>
             </Pressable>
-            <Pressable style={styles.settingItem}>
+            <Pressable 
+              style={styles.settingItem}
+              onPress={() => router.push('/topics-settings')}
+            >
               <Text style={styles.settingText}>Topics</Text>
             </Pressable>
           </View>
@@ -53,9 +56,6 @@ export default function SettingsScreen() {
             <Pressable style={styles.settingItem}>
               <Text style={styles.settingText}>Terms of Service</Text>
             </Pressable>
-            <View style={styles.settingItem}>
-              <Text style={styles.versionText}>Version 1.0.0</Text>
-            </View>
           </View>
         </View>
       </ScrollView>
@@ -111,10 +111,5 @@ const styles = StyleSheet.create({
   },
   dangerText: {
     color: COLORS.semantic.error,
-  },
-  versionText: {
-    fontSize: 14,
-    color: COLORS.text.secondary,
-    fontFamily: FONTS.body,
   },
 });
