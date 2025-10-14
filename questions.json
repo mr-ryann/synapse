@@ -1,0 +1,45 @@
+[
+  {
+    "topic": "Philosophy",
+    "challenges": [
+      {
+        "id": 1,
+        "title": "The Meaning of Life",
+        "coreProvocation": "If you could define the meaning of life in one sentence, what would it be? Consider not just what makes life worth living, but what gives it ultimate purpose.",
+        "aiSocraticHint": "Think about what philosophers like Camus and Sartre said about the absurdity of existence. What if there is no inherent meaning - does that mean life is meaningless?",
+        "aiReflectorQuestion": "What activities in your life currently give you the most fulfillment? How do they connect to your sense of purpose?"
+      },
+      {
+        "id": 2,
+        "title": "Free Will vs Determinism",
+        "coreProvocation": "Do you truly have free will, or are your choices predetermined by genetics, environment, and past experiences?",
+        "aiSocraticHint": "Consider the neuroscience of decision-making. Every choice you make is influenced by brain chemistry and neural pathways formed by your experiences.",
+        "aiReflectorQuestion": "Think of a major life decision you made. What factors influenced it, and how much of that was truly 'you' choosing?"
+      }
+    ]
+  },
+  {
+    "topic": "Technology",
+    "challenges": [
+      {
+        "id": 3,
+        "title": "AI and Human Creativity",
+        "coreProvocation": "Can artificial intelligence ever truly create something original, or will it always be limited to recombining human-created ideas?",
+        "aiSocraticHint": "What makes human creativity unique? Is it the ability to feel emotions, have consciousness, or something else entirely?",
+        "aiReflectorQuestion": "When you create something, what internal process feels most 'human' to you? Could a machine replicate that?"
+      }
+    ]
+  },
+  {
+    "topic": "Ethics",
+    "challenges": [
+      {
+        "id": 4,
+        "title": "The Trolley Problem",
+        "coreProvocation": "If you could save five lives by sacrificing one, would you pull the lever? What if the one person was someone you loved?",
+        "aiSocraticHint": "Utilitarianism says the greatest good for the greatest number. But what makes one life more valuable than another?",
+        "aiReflectorQuestion": "What principles guide your moral decisions? Are they consistent, or do they change based on the situation?"
+      }
+    ]
+  }
+]

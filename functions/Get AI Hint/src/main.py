@@ -21,45 +21,42 @@ def main(context):
 
         # Parse request body
         data = json.loads(context.req.body) if context.req.body else {}
-        question_id = data.get("questionId")
+        challenge_id = data.get("questionId")  # Keep as questionId for backward compatibility
         user_query = data.get("userQuery", "")  # User's question/confusion
 
-        if not question_id:
+        if not challenge_id:
             return context.res.json({"success": False, "error": "questionId required"}, 400)
 
-        # Get question details
-        question = databases.get_document(
+        # Get challenge details from challenges collection
+        challenge = databases.get_document(
             database_id=database_id,
-            collection_id="questions",
-            document_id=question_id
+            collection_id="challenges",
+            document_id=challenge_id
         )
 
-        question_text = question.get("question", "")
-        question_type = question.get("type", "text")
+        challenge_text = challenge.get("coreProvocation", "")
+        challenge_title = challenge.get("title", "")
         
-        # For MCQs, don't reveal the correct answer
-        context_info = f"Question: {question_text}\n"
-        if question_type == "mcq":
-            options = question.get("options", [])
-            context_info += f"Options: {', '.join(options)}\n"
+        # Combine title and provocation for context
+        context_info = f"Challenge: {challenge_title}\n{challenge_text}"
 
         # Initialize Gemini
         genai.configure(api_key=os.environ["GEMINI_API_KEY"])
         model = genai.GenerativeModel('gemini-pro')
 
-        # Construct Socratic prompt
-        prompt = f"""You are a Socratic tutor helping a student think critically. 
+        # Construct Socratic prompt for critical thinking challenge
+        prompt = f"""You are a Socratic tutor helping a student develop critical thinking skills through a thought-provoking challenge.
 
 {context_info}
 
-The student is working on this question and has asked: "{user_query if user_query else 'Can you give me a hint?'}"
+The student is working on this critical thinking challenge and has asked: "{user_query if user_query else 'Can you give me a hint?'}"
 
 Your task:
-1. DO NOT reveal the answer directly
-2. Ask guiding questions that help them discover the answer themselves
-3. Encourage them to break down the problem
-4. Be supportive and encouraging
-5. Keep your hint brief (2-3 sentences)
+1. DO NOT reveal any direct answers or solutions
+2. Ask guiding questions that help them think more deeply about the challenge
+3. Encourage them to break down the problem and consider different perspectives
+4. Be supportive and encouraging, fostering intellectual curiosity
+5. Keep your hint brief (2-3 sentences) and focused on developing thinking skills
 
 Provide a Socratic hint:"""
 
@@ -70,7 +67,7 @@ Provide a Socratic hint:"""
             "success": True,
             "data": {
                 "hint": hint_text,
-                "questionId": question_id
+                "questionId": challenge_id  # Keep for backward compatibility
             }
         })
 

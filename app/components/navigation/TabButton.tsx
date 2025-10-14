@@ -8,7 +8,7 @@ interface TabButtonProps {
   icon: LucideIcon;
   label: string;
   isActive: boolean;
-  onPress: () => void;
+  onPress?: () => void;
 }
 
 export const TabButton = React.memo<TabButtonProps>(({ 
@@ -31,6 +31,7 @@ export const TabButton = React.memo<TabButtonProps>(({
   return (
     <Pressable
       onPress={onPress}
+      disabled={isActive}
       style={{
         flex: 1,
         alignItems: 'center',

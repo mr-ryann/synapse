@@ -1,16 +1,13 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { COLORS, FONTS } from '../theme';
+import { COLORS, FONTS } from '../../theme';
 
 export default function LibraryScreen() {
   return (
     <View style={styles.container}>
       <ScrollView style={styles.content}>
         <View style={styles.inner}>
-          <Text style={styles.heading}>Your Library</Text>
-          <Text style={styles.description}>
-            Completed challenges and saved responses
-          </Text>
+          <Text style={styles.heading}>Library</Text>
           {/* Library content will go here */}
           <View style={styles.placeholder}>
             <Text style={styles.placeholderText}>

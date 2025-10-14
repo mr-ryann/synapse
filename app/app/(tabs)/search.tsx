@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet, ScrollView } from 'react-native';
-import { COLORS, FONTS } from '../theme';
+import { COLORS, FONTS } from '../../theme';
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
@@ -17,9 +17,6 @@ export default function SearchScreen() {
             value={query}
             onChangeText={setQuery}
           />
-          <Text style={styles.helperText}>
-            Search for challenges by topic, title, or keyword
-          </Text>
           {/* Search results will go here */}
         </View>
       </ScrollView>

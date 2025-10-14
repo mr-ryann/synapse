@@ -20,7 +20,7 @@ export const ChallengeCard = React.memo<ChallengeCardProps>(({
         borderRadius: 12,
         padding: 16,
         marginVertical: 8,
-        shadowColor: COLORS.neutral[800],
+        shadowColor: COLORS.accent.primary,
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.1,
         shadowRadius: 4,
@@ -39,7 +39,7 @@ export const ChallengeCard = React.memo<ChallengeCardProps>(({
         <Text style={{ color: COLORS.text.secondary }}>
           {challenge.topic} {challenge.subcategory && `• ${challenge.subcategory}`}
         </Text>
-        <Text style={{ color: COLORS.primary[500], fontWeight: '600' }}>
+        <Text style={{ color: COLORS.accent.primary, fontWeight: '600' }}>
           +{challenge.xpReward} XP
         </Text>
       </View>

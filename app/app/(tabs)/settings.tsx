@@ -1,8 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuth } from '../hooks/useAuth';
-import { COLORS, FONTS } from '../theme';
+import { useAuth } from '../../hooks/useAuth';
+import { COLORS, FONTS } from '../../theme';
 
 export default function SettingsScreen() {
   const router = useRouter();
@@ -18,9 +18,6 @@ export default function SettingsScreen() {
       <ScrollView style={styles.content}>
         <View style={styles.inner}>
           <Text style={styles.heading}>Settings</Text>
-          <Text style={styles.description}>
-            App preferences and account settings
-          </Text>
 
           {/* Settings sections */}
           <View style={styles.section}>

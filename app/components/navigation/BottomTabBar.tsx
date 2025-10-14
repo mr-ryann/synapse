@@ -1,38 +1,20 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { useRouter, usePathname } from 'expo-router';
 import { Home, Search, BookOpen, Settings } from 'lucide-react-native';
 import { TabButton } from './TabButton';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../../theme';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 const TABS = [
-  { name: 'home', icon: Home, route: '/', label: 'Home' },
-  { name: 'search', icon: Search, route: '/search', label: 'Search' },
-  { name: 'library', icon: BookOpen, route: '/library', label: 'Library' },
-  { name: 'settings', icon: Settings, route: '/settings', label: 'Settings' },
+  { name: 'home', icon: Home, routeName: 'home', label: 'Home' },
+  { name: 'search', icon: Search, routeName: 'search', label: 'Search' },
+  { name: 'library', icon: BookOpen, routeName: 'library', label: 'Library' },
+  { name: 'settings', icon: Settings, routeName: 'settings', label: 'Settings' },
 ] as const;
 
-export const BottomTabBar = React.memo(() => {
-  const router = useRouter();
-  const pathname = usePathname();
+export const BottomTabBar = React.memo<BottomTabBarProps>(({ state, navigation }) => {
   const insets = useSafeAreaInsets();
-
-  // Don't show on auth screens and immersive screens
-  const hideOnScreens = [
-    '/login',
-    '/signup',
-    '/auth-callback',
-    '/reset-password',
-    '/reset-password-confirm',
-    '/verify-email',
-    '/email-verified',
-    '/challenge-player',
-  ];
-  
-  if (hideOnScreens.includes(pathname)) {
-    return null;
-  }
 
   return (
     <View
@@ -43,20 +25,24 @@ export const BottomTabBar = React.memo(() => {
         },
       ]}
     >
-      {TABS.map((tab) => {
-        // Normalize root route: '', '/', or '/index' map to '/'
-        const currentRoute = ['','/','/index'].includes(pathname) ? '/' : pathname;
-        const isActive =
-          (tab.route === '/' && currentRoute === '/') ||
-          (tab.route !== '/' && currentRoute.startsWith(tab.route));
+      {state.routes.map((route, index) => {
+        const tabConfig = TABS.find(t => t.routeName === route.name);
+        if (!tabConfig) return null;
+
+        const isActive = state.index === index;
+        const onPress = () => {
+          if (!isActive) {
+            navigation.navigate(route.name);
+          }
+        };
           
         return (
           <TabButton
-            key={tab.name}
-            icon={tab.icon}
-            label={tab.label}
+            key={route.key}
+            icon={tabConfig.icon}
+            label={tabConfig.label}
             isActive={isActive}
-            onPress={() => !isActive && router.push(tab.route)}
+            onPress={onPress}
           />
         );
       })}

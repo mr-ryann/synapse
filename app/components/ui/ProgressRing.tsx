@@ -32,7 +32,7 @@ export const ProgressRing = React.memo<ProgressRingProps>(({
         height: size,
         borderRadius: size / 2,
         borderWidth: strokeWidth,
-        borderColor: COLORS.neutral[200],
+        borderColor: COLORS.border.default,
         position: 'absolute',
       }} />
       <View style={{
@@ -40,7 +40,7 @@ export const ProgressRing = React.memo<ProgressRingProps>(({
         height: size,
         borderRadius: size / 2,
         borderWidth: strokeWidth,
-        borderColor: COLORS.primary[500],
+        borderColor: COLORS.accent.primary,
         position: 'absolute',
         transform: [{ rotate: '-90deg' }],
         // For simplicity, use a basic view; in full implementation, use SVG or library for proper arc
@@ -49,7 +49,7 @@ export const ProgressRing = React.memo<ProgressRingProps>(({
         <Text style={{
           fontSize: size / 4,
           fontWeight: 'bold',
-          color: COLORS.primary[500],
+          color: COLORS.accent.primary,
         }}>
           {Math.round(progress * 100)}%
         </Text>

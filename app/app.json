@@ -4,7 +4,7 @@
     "slug": "synapse",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/full_logo.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "scheme": "synapse",
@@ -17,7 +17,8 @@
       "expo-router"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "backgroundColor": "#000000"
     },
     "android": {
       "adaptiveIcon": {

@@ -44,16 +44,16 @@ export const StepViewer = React.memo<StepViewerProps>(({
                 key={index}
                 onPress={() => onOptionSelect?.(option)}
                 style={{
-                  backgroundColor: selectedOption === option ? COLORS.primary[100] : COLORS.neutral[100],
+                  backgroundColor: selectedOption === option ? COLORS.background.elevated : COLORS.background.secondary,
                   borderRadius: 8,
                   padding: 12,
                   marginVertical: 4,
                   borderWidth: selectedOption === option ? 2 : 0,
-                  borderColor: COLORS.primary[500],
+                  borderColor: COLORS.accent.primary,
                 }}
               >
                 <Text style={{
-                  color: selectedOption === option ? COLORS.primary[700] : COLORS.text.primary,
+                  color: selectedOption === option ? COLORS.accent.primary : COLORS.text.primary,
                   fontWeight: selectedOption === option ? '600' : 'normal',
                 }}>
                   {option}

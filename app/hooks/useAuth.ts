@@ -56,9 +56,9 @@ export const useAuth = () => {
       Alert.alert('Success', `Welcome ${hasSelectedTopics ? 'back' : ''}, ${userName || userEmail}!`);
       
       if (hasSelectedTopics) {
-        router.push('/topics');
+        router.replace('/home');
       } else {
-        router.push('/onboarding');
+        router.replace('/topics');
       }
     } catch (err) {
       // If user document doesn't exist, onboarding not complete
@@ -75,7 +75,7 @@ export const useAuth = () => {
         onboardingCompleted: false,
       };
       setUser(user);
-      router.push('/onboarding');
+      router.replace('/topics');
     }
   };
 
@@ -114,6 +114,19 @@ export const useAuth = () => {
 
     setLoading(true);
     try {
+      // Check if there's already an active session
+      try {
+        const existingUser = await account.get();
+        if (existingUser) {
+          // Delete existing session first
+          await account.deleteSession('current');
+          clearUser();
+        }
+      } catch (e) {
+        // No existing session, continue with login
+      }
+
+      // Create new session
       await account.createEmailPasswordSession(email, password);
       const user = await account.get();
       await navigateAfterAuth(user.$id, user.name, user.email);
@@ -129,13 +142,26 @@ export const useAuth = () => {
    */
   const loginWithGoogle = async (successUrl: string, failureUrl: string) => {
     try {
+      // Check if there's already an active session
+      try {
+        const existingUser = await account.get();
+        if (existingUser) {
+          // Delete existing session first
+          await account.deleteSession('current');
+          clearUser();
+        }
+      } catch (e) {
+        // No existing session, continue with OAuth
+      }
+
+      // Note: OAuth in web will open in popup/redirect, not work perfectly in Expo web
       account.createOAuth2Session(
         OAuthProvider.Google,
         successUrl, // Will redirect to auth-callback to check onboarding
         failureUrl
       );
     } catch (e) {
-      Alert.alert('Error', (e as Error).message);
+      Alert.alert('Error', 'Google Sign-In is only available on mobile devices. Please use email/password login on web.');
     }
   };
 
@@ -172,6 +198,18 @@ export const useAuth = () => {
 
     setLoading(true);
     try {
+      // Check if there's already an active session
+      try {
+        const existingUser = await account.get();
+        if (existingUser) {
+          // Delete existing session first
+          await account.deleteSession('current');
+          clearUser();
+        }
+      } catch (e) {
+        // No existing session, continue with signup
+      }
+
       // Create account
       await account.create(ID.unique(), email, password, name);
       
@@ -180,8 +218,8 @@ export const useAuth = () => {
       
       Alert.alert('Success', 'Account created successfully!');
       
-      // Always navigate to onboarding for new users
-      router.push('/onboarding');
+      // Always navigate to topics selection for new users
+      router.replace('/topics');
     } catch (e) {
       Alert.alert('Error', (e as Error).message);
     } finally {

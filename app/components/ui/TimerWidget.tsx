@@ -38,14 +38,14 @@ export const TimerWidget = React.memo<TimerWidgetProps>(({
   };
 
   const getColor = () => {
-    if (timeLeft < 60) return COLORS.error;
-    if (timeLeft < 300) return COLORS.warning;
-    return COLORS.primary[500];
+    if (timeLeft < 60) return COLORS.semantic.error;
+    if (timeLeft < 300) return COLORS.semantic.warning;
+    return COLORS.accent.primary;
   };
 
   return (
     <View style={{
-      backgroundColor: COLORS.neutral[100],
+      backgroundColor: COLORS.background.elevated,
       borderRadius: 20,
       paddingHorizontal: 16,
       paddingVertical: 8,
