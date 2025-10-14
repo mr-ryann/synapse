@@ -1,7 +1,7 @@
+# Synapse: Training Your Brain, Not Just Your Prompts...
+
 ![Synapse Header Logo](https://raw.githubusercontent.com/mr-ryann/synapse/70a1ea615164670009049281dcbbeecb3aeb31a7/app/assets/header_logo.png)
 
-
-# ⚡ Synapse: Training Your Brain, Not Just Your Prompts...
 
 So, what's Synapse all about? It's a mobile app built to fight **Cognitive Offloading**" In a world where AI has all the answers, we dare to ask the right questions. Think of it as a dojo for your mind, not a crutch for your thoughts!
 
@@ -19,7 +19,8 @@ Most apps just spit out answers. Synapse is different; we help you come up with 
 
 To be clear: we're not anti-AI, we're just against over-relying on it. 
 
-     > We believe AI should be like a calculator —a powerful tool that helps you focus on the big picture, not a replacement for your own thinking. 🛠️
+# We believe AI should be like a calculator
+# —a powerful tool that helps you focus on the big picture, not a replacement for your own thinking. 🛠️
 
 Our whole philosophy is simple: Use AI to help your brain grow, not to replace it. Our AI acts as a friendly guide, throwing you interesting challenges that don't have a single right answer and giving you a cool space to think it all through.
 
