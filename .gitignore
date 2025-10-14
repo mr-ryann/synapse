@@ -5,7 +5,6 @@ node_modules/
 .vscode/
 .expo/
 .expo-shared/
-.github/
 web-build/
 dist/
 *.md
@@ -20,3 +19,5 @@ npm-debug.*
 *.orig.*
 gluestack-starter/
 scripts/
+questions.json
+
