@@ -35,8 +35,6 @@ Feeling stuck? Our AI won't give you the answer. Instead, it'll ask you another 
 - ### The Personal Dashboard: 
 This is your personal journey! Your dashboard shows you how your thinking grows over time by tracking your streaks and mindful minutes. 📈
 
----
-
 ## Tech Stack 🚀
 Here's all the cool tech we used to build everything!
 
