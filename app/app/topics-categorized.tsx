@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { databases, account } from '../lib/appwrite';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { databases, account, safeDatabaseOperation } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Home, Search, BookOpen, Settings } from 'lucide-react-native';
 import { COLORS, FONTS } from '../theme';
 
 interface Topic {
@@ -14,6 +16,25 @@ interface Topic {
 interface GroupedTopics {
   [category: string]: Topic[];
 }
+
+const TabIcon = ({ icon: Icon, label, isActive, onPress }: any) => {
+  return (
+    <TouchableOpacity
+      style={styles.tabButton}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <Icon 
+        size={24} 
+        color={isActive ? COLORS.accent.primary : COLORS.text.muted} 
+        strokeWidth={isActive ? 2.5 : 2}
+      />
+      <Text style={[styles.tabLabel, isActive && styles.tabLabelActive]}>
+        {label}
+      </Text>
+    </TouchableOpacity>
+  );
+};
 
 export default function TopicsWithCategories() {
   const [topics, setTopics] = useState<Topic[]>([]);
@@ -29,18 +50,34 @@ export default function TopicsWithCategories() {
         const userData = await account.get();
         setUser(userData);
 
-        const userDoc = await databases.getDocument('synapse', 'users', userData.$id);
-        setSelectedTopics(userDoc.selectedTopics || []);
+        const userResult = await safeDatabaseOperation(
+          () => databases.getDocument('synapse', 'users', userData.$id),
+          'Failed to fetch user data'
+        );
+
+        if (userResult.success && userResult.data) {
+          setSelectedTopics(userResult.data.selectedTopics || []);
+        } else {
+          Alert.alert('Error', userResult.error || 'Failed to load user data');
+          if (userResult.error?.includes('Session expired') || userResult.error?.includes('No active session')) {
+            router.push('/login');
+          }
+        }
       } catch (e) {
+        console.error('Auth error:', e);
         router.push('/login');
       }
     };
     init();
 
     const fetchTopics = async () => {
-      try {
-        const res = await databases.listDocuments('synapse', 'topics');
-        const topicsList = res.documents as unknown as Topic[];
+      const result = await safeDatabaseOperation(
+        () => databases.listDocuments('synapse', 'topics'),
+        'Failed to fetch topics'
+      );
+
+      if (result.success && result.data) {
+        const topicsList = result.data.documents as unknown as Topic[];
         setTopics(topicsList);
 
         const grouped: GroupedTopics = {};
@@ -52,8 +89,12 @@ export default function TopicsWithCategories() {
           grouped[category].push(topic);
         });
         setGroupedTopics(grouped);
-      } catch (e) {
-        console.error('Error fetching topics:', e);
+      } else {
+        Alert.alert('Error', result.error || 'Failed to load topics');
+        console.error('Error fetching topics:', result.error);
+        if (result.error?.includes('Session expired') || result.error?.includes('No active session')) {
+          router.push('/login');
+        }
       }
     };
     fetchTopics();
@@ -65,13 +106,22 @@ export default function TopicsWithCategories() {
       : [...selectedTopics, topicId];
     setSelectedTopics(newSelected);
 
-    try {
-      if (!user) return;
-      await databases.updateDocument('synapse', 'users', user.$id, {
+    if (!user) return;
+
+    const result = await safeDatabaseOperation(
+      () => databases.updateDocument('synapse', 'users', user.$id, {
         selectedTopics: newSelected,
-      });
-    } catch (e) {
-      console.error('Error updating topics:', e);
+      }),
+      'Failed to update topics'
+    );
+
+    if (!result.success) {
+      Alert.alert('Error', result.error || 'Failed to update topics');
+      // Revert the selection on error
+      setSelectedTopics(selectedTopics);
+      if (result.error?.includes('Session expired') || result.error?.includes('No active session')) {
+        router.push('/login');
+      }
     }
   };
 
@@ -103,6 +153,8 @@ export default function TopicsWithCategories() {
     </View>
   );
 
+  const insets = useSafeAreaInsets();
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -124,6 +176,34 @@ export default function TopicsWithCategories() {
       >
         <Text style={styles.continueButtonText}>Continue</Text>
       </TouchableOpacity>
+
+      {/* Bottom Tab Bar */}
+      <View style={[styles.bottomTabBar, { paddingBottom: insets.bottom }]}>
+        <TabIcon 
+          icon={Home} 
+          label="Home" 
+          isActive={false}
+          onPress={() => router.push('/home')}
+        />
+        <TabIcon 
+          icon={Search} 
+          label="Search" 
+          isActive={false}
+          onPress={() => router.push('/search')}
+        />
+        <TabIcon 
+          icon={BookOpen} 
+          label="Library" 
+          isActive={false}
+          onPress={() => router.push('/library')}
+        />
+        <TabIcon 
+          icon={Settings} 
+          label="Settings" 
+          isActive={false}
+          onPress={() => router.push('/settings')}
+        />
+      </View>
     </View>
   );
 }
@@ -134,25 +214,26 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background.primary,
   },
   header: {
-    paddingHorizontal: 24,
-    paddingTop: 48,
-    paddingBottom: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border.default,
+    backgroundColor: COLORS.background.secondary,
   },
   title: {
-    fontSize: 30,
+    fontSize: 24,
     fontFamily: FONTS.heading,
+    fontWeight: '600',
     color: COLORS.text.primary,
-    letterSpacing: 0.6,
+    marginBottom: 4,
   },
   counter: {
     fontSize: 14,
     fontFamily: FONTS.body,
-    color: COLORS.accent.tertiary,
-    letterSpacing: 1,
+    color: COLORS.text.secondary,
   },
+
   listContent: {
     paddingHorizontal: 20,
     paddingBottom: 32,
@@ -226,5 +307,33 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontFamily: FONTS.heading,
     letterSpacing: 0.8,
+  },
+  bottomTabBar: {
+    flexDirection: 'row',
+    backgroundColor: COLORS.background.secondary,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border.default,
+    paddingTop: 12,
+    shadowColor: COLORS.overlay.glow,
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 12,
+  },
+  tabButton: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+  },
+  tabLabel: {
+    fontSize: 12,
+    fontFamily: FONTS.body,
+    color: COLORS.text.muted,
+    marginTop: 4,
+  },
+  tabLabelActive: {
+    color: COLORS.accent.primary,
+    fontWeight: '600',
   },
 });

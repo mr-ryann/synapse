@@ -45,6 +45,13 @@ export default function TabsLayout() {
           title: 'Challenge',
         }} 
       />
+      <Tabs.Screen 
+        name="topics" 
+        options={{ 
+          href: null, // Don't show in tab bar
+          title: 'Topics',
+        }} 
+      />
     </Tabs>
   );
 }

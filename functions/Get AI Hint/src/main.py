@@ -44,12 +44,18 @@ def main(context):
         genai.configure(api_key=os.environ["GEMINI_API_KEY"])
         model = genai.GenerativeModel('gemini-pro')
 
+        # Enhanced prompt with user's response context
+        if user_query and user_query != "Can you give me a hint?" and user_query != "I need a hint":
+            context_addition = f"\n\nThe student has written: \"{user_query}\"\n\nProvide a hint that builds on their current thinking and guides them further."
+        else:
+            context_addition = ""
+
         # Construct Socratic prompt for critical thinking challenge
         prompt = f"""You are a Socratic tutor helping a student develop critical thinking skills through a thought-provoking challenge.
 
 {context_info}
 
-The student is working on this critical thinking challenge and has asked: "{user_query if user_query else 'Can you give me a hint?'}"
+The student is working on this critical thinking challenge.{context_addition}
 
 Your task:
 1. DO NOT reveal any direct answers or solutions
@@ -57,6 +63,8 @@ Your task:
 3. Encourage them to break down the problem and consider different perspectives
 4. Be supportive and encouraging, fostering intellectual curiosity
 5. Keep your hint brief (2-3 sentences) and focused on developing thinking skills
+6. If they've shared their thoughts, acknowledge what they're exploring and guide them further
+7. Use the Socratic method: ask questions rather than give statements
 
 Provide a Socratic hint:"""
 

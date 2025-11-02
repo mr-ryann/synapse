@@ -190,7 +190,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background.primary,
   },
   scrollContent: {
-    padding: 16,
+    paddingHorizontal: 16,
+    paddingTop: 8,
     paddingBottom: 32,
   },
   greeting: {

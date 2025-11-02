@@ -3,7 +3,7 @@ import { GluestackUIProvider } from '@gluestack-ui/themed';
 import { useFonts } from 'expo-font';
 import { config } from './gluestack-ui.config';
 import { useEffect } from 'react';
-import { account } from './lib/appwrite';
+import { checkSession } from './lib/appwrite';
 
 export default function App() {
   const [fontsLoaded] = useFonts({
@@ -15,14 +15,15 @@ export default function App() {
   useEffect(() => {
     const checkAppwriteConnection = async () => {
       try {
-        const user = await account.get();
-        if (user) {
-          console.log('✅ Appwrite connection successful. User:', user.name);
+        const session = await checkSession();
+        if (session) {
+          console.log('✅ Appwrite connection successful. User:', session.name, `(${session.email})`);
+          console.log('✅ Session is active and valid');
         } else {
-          console.log('🟡 Appwrite connection successful, but no user is logged in.');
+          console.log('🟡 Appwrite configured, but no active session. User needs to log in.');
         }
       } catch (error: any) {
-        console.error('❌ Appwrite connection failed:', error.message);
+        console.error('❌ Appwrite connection check failed:', error.message);
       }
     };
 

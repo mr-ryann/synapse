@@ -8,6 +8,10 @@ from appwrite.query import Query
 # MVP Configuration
 XP_PER_ANSWER = 10
 XP_BONUS_CORRECT = 5
+THINKING_TIME_BONUS_THRESHOLD = 120  # 2 minutes
+THINKING_TIME_BONUS_XP = 5
+SUBSTANTIAL_RESPONSE_LENGTH = 200  # characters
+SUBSTANTIAL_RESPONSE_BONUS_XP = 5
 
 def main(context):
     """
@@ -29,6 +33,7 @@ def main(context):
         user_id = data.get("userId")
         question_id = data.get("questionId")
         user_answer = data.get("answer")
+        response_text = data.get("responseText", user_answer)
         time_taken = data.get("timeTaken", 0)  # seconds
 
         if not all([user_id, question_id, user_answer]):
@@ -49,8 +54,22 @@ def main(context):
             correct_answer = question.get("correctAnswer")
             is_correct = str(user_answer).strip().lower() == str(correct_answer).strip().lower()
         
-        # Calculate XP
+        # Calculate XP with quality bonuses
         xp_earned = XP_PER_ANSWER
+        thinking_quality_bonus = 0
+        
+        # Bonus for thoughtful time spent (at least 2 minutes)
+        if time_taken >= THINKING_TIME_BONUS_THRESHOLD:
+            thinking_quality_bonus += THINKING_TIME_BONUS_XP
+        
+        # Bonus for substantial response (more than 200 characters)
+        if response_text and len(str(response_text)) >= SUBSTANTIAL_RESPONSE_LENGTH:
+            thinking_quality_bonus += SUBSTANTIAL_RESPONSE_BONUS_XP
+        
+        # Add quality bonus
+        xp_earned += thinking_quality_bonus
+        
+        # Correctness bonus for MCQs
         if is_correct and question_type == "mcq":
             xp_earned += XP_BONUS_CORRECT
 
@@ -63,8 +82,10 @@ def main(context):
                 "userId": user_id,
                 "questionId": question_id,
                 "answer": user_answer,
+                "responseText": response_text,
                 "isCorrect": is_correct,
                 "timeTaken": time_taken,
+                "thinkingQualityBonus": thinking_quality_bonus,
                 "xpEarned": xp_earned,
                 "submittedAt": datetime.utcnow().isoformat()
             },
@@ -75,17 +96,22 @@ def main(context):
             ]
         )
 
-        # Update user's challenge history
-        databases.update_document(
-            database_id=database_id,
-            collection_id="user_challenge_history",
-            document_id=data.get("historyId"),  # Should be passed from getChallengeForUser
-            data={
-                "status": "completed",
-                "completedAt": datetime.utcnow().isoformat(),
-                "responseId": response_doc["$id"]
-            }
-        )
+        # Update user's challenge history if historyId provided
+        history_id = data.get("historyId")
+        if history_id:
+            try:
+                databases.update_document(
+                    database_id=database_id,
+                    collection_id="user_challenge_history",
+                    document_id=history_id,
+                    data={
+                        "status": "completed",
+                        "completedAt": datetime.utcnow().isoformat(),
+                        "responseId": response_doc["$id"]
+                    }
+                )
+            except Exception as e:
+                context.log(f"Could not update challenge history: {str(e)}")
 
         # Get current user data for gamification update
         user = databases.get_document(

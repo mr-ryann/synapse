@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Alert, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { databases, account } from '../lib/appwrite';
+import { databases, account } from '../../lib/appwrite';
 import { useRouter } from 'expo-router';
-import { COLORS, FONTS } from '../theme';
+import { COLORS, FONTS } from '../../theme';
 
 interface Topic {
   name: string;
@@ -71,45 +71,47 @@ export default function Topics() {
   const selectTopicForChallenge = (topicName: string) => {
     // Navigate to challenge player with selected topic
     router.push({
-      pathname: '/challenge-player',
+      pathname: '/(tabs)/challenge-player',
       params: { topicName }
     });
   };
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerSection}>
-        <Text style={styles.heading}>Choose a Topic</Text>
-        <Text style={styles.subtitle}>
-          Select a topic to start your critical thinking challenge
-        </Text>
-      </View>
-      
-      <View style={styles.carouselSection}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.carouselContainer}
-          snapToInterval={CARD_WIDTH + 16}
-          decelerationRate="fast"
-        >
-          {topics.map((item) => (
-            <TouchableOpacity
-              key={item.name}
-              onPress={() => selectTopicForChallenge(item.name)}
-              activeOpacity={0.85}
-              style={styles.topicCard}
-            >
-              <Text style={styles.topicName}>
-                {item.name}
-              </Text>
-              <Text style={styles.topicCount}>
-                {item.count} challenges
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
-      </View>
+      <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles.headerSection}>
+          <Text style={styles.heading}>Choose a Topic</Text>
+          <Text style={styles.subtitle}>
+            Select a topic to start your critical thinking challenge
+          </Text>
+        </View>
+        
+        <View style={styles.carouselSection}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.carouselContainer}
+            snapToInterval={CARD_WIDTH + 16}
+            decelerationRate="fast"
+          >
+            {topics.map((item) => (
+              <TouchableOpacity
+                key={item.name}
+                onPress={() => selectTopicForChallenge(item.name)}
+                activeOpacity={0.85}
+                style={styles.topicCard}
+              >
+                <Text style={styles.topicName}>
+                  {item.name}
+                </Text>
+                <Text style={styles.topicCount}>
+                  {item.count} challenges
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      </ScrollView>
     </View>
   );
 }
@@ -119,9 +121,12 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: COLORS.background.primary,
   },
+  scrollContainer: {
+    flex: 1,
+  },
   headerSection: {
     paddingHorizontal: 20,
-    paddingTop: 24,
+    paddingTop: 16,
     paddingBottom: 20,
   },
   heading: {
@@ -138,9 +143,10 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   carouselSection: {
-    flex: 1,
+    minHeight: 400,
     justifyContent: 'center',
     paddingVertical: 40,
+    paddingBottom: 100, // Extra space for bottom tab bar
   },
   carouselContainer: {
     paddingHorizontal: 20,

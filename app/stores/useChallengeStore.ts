@@ -9,9 +9,14 @@ interface ChallengeStore {
     totalSteps: number;
     startTime: Date | null;
   };
+  thinkingTime: number;
+  currentHint: string | null;
   setCurrentChallenge: (challenge: Challenge) => void;
   setCurrentStep: (step: ChallengeStep) => void;
   updateProgress: (updates: Partial<ChallengeStore['progress']>) => void;
+  setThinkingTime: (time: number) => void;
+  setCurrentHint: (hint: string | null) => void;
+  resetChallengeSession: () => void;
   clearChallenge: () => void;
 }
 
@@ -23,6 +28,8 @@ export const useChallengeStore = create<ChallengeStore>((set) => ({
     totalSteps: 0,
     startTime: null,
   },
+  thinkingTime: 0,
+  currentHint: null,
   setCurrentChallenge: (challenge) =>
     set({
       currentChallenge: challenge,
@@ -37,6 +44,20 @@ export const useChallengeStore = create<ChallengeStore>((set) => ({
     set((state) => ({
       progress: { ...state.progress, ...updates },
     })),
+  setThinkingTime: (time) => set({ thinkingTime: time }),
+  setCurrentHint: (hint) => set({ currentHint: hint }),
+  resetChallengeSession: () =>
+    set({
+      currentChallenge: null,
+      currentStep: null,
+      thinkingTime: 0,
+      currentHint: null,
+      progress: {
+        currentStepIndex: 0,
+        totalSteps: 0,
+        startTime: null,
+      },
+    }),
   clearChallenge: () =>
     set({
       currentChallenge: null,

@@ -5,14 +5,21 @@
   "scripts": {
     "ios": "cd app && npm run ios",
     "android": "cd app && npm run android",
-  "start": "npm --prefix app run start --",
-  "seed:challenges": "tsx scripts/seed-challenges.ts",
-  "seed:topics": "tsx scripts/seed-topics.ts"
+    "start": "npm --prefix app run start --",
+    "seed:challenges": "tsx scripts/seed-challenges.ts",
+    "seed:topics": "tsx scripts/seed-topics.ts"
   },
   "dependencies": {
-    "expo": "^54.0.12",
+    "appwrite": "^21.3.0",
+    "expo": "^54.0.21",
+    "expo-router": "~6.0.14",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "react-native": "^0.81.5",
+    "react-native-appwrite": "^0.17.1",
     "react-native-gesture-handler": "^2.28.0",
-    "react-native-svg": "^15.13.0",
+    "react-native-svg": "^15.12.1",
+    "react-native-url-polyfill": "^3.0.0",
     "zustand": "^5.0.8"
   },
   "private": true,

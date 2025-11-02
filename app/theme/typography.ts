@@ -1,7 +1,7 @@
 export const FONTS = {
-  brand: 'GangOfThree',
-  heading: 'FunnelDisplay',
-  body: 'FunnelSans',
+  brand: 'Gang Of Three',
+  heading: 'Funnel Display Light',
+  body: 'Funnel Sans Light',
 };
 
 export const FONT_WEIGHTS = {

@@ -29,11 +29,13 @@ export interface Challenge {
   title: string; // for display
   topic: string; // for display
   topicId: string;
+  coreProvocation?: string; // The main challenge question/prompt
   subcategory?: string;
   difficulty: number;
   xpReward: number;
   estimatedTime: number; // in minutes
   stepsCount?: number; // for quests
+  source?: string; // 'curated' | 'ai_generated'
 }
 
 export interface ChallengeStep {

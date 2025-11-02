@@ -3,7 +3,7 @@
 ![Synapse Header Logo](https://raw.githubusercontent.com/mr-ryann/synapse/70a1ea615164670009049281dcbbeecb3aeb31a7/app/assets/header_logo.png)
 
 
-So, what's Synapse all about? It's a mobile app built to fight **Cognitive Offloading**" In a world where AI has all the answers, we dare to ask the right questions. Think of it as a dojo for your mind, not a crutch for your thoughts!
+So, what's Synapse all about? It's a mobile app built to fight **Cognitive Offloading** In a world where AI has all the answers, we dare to ask the right questions.
 
 ## The Idea: What's Our Deal with **Cognitive Offloading**? 🤔
 
@@ -17,7 +17,7 @@ Most apps just spit out answers. Synapse is different; we help you come up with 
 
 To be clear: we're not anti-AI, we're just against over-relying on it. 
 
-**We believe AI should be like a calculator --a powerful tool that helps you focus on the big picture, not a replacement for your own thinking. 🛠️**
+**We believe AI should be like a calculator --a tool that helps you focus on the big picture, not a replacement for your own thinking. 🛠️**
 
 Our whole philosophy is simple: Use AI to help your brain grow, not to replace it. Our AI acts as a friendly guide, throwing you interesting challenges that don't have a single right answer and giving you a cool space to think it all through.
 
@@ -43,6 +43,17 @@ Here's all the cool tech we used to build everything!
 + Navigation: Expo Router
 + State Management: Zustand
 + Backend: Appwrite
-+ AI: Gemini
++ AI: Gemini (Google Generative AI)
++ Serverless Cloud Functions: Appwrite Functions using Python 3.11
+
+## Key Features 🌟
+
+- **AI-Powered Challenges**: Dynamic challenge generation using Gemini AI
+- **Thinking Timer**: Track and celebrate your thinking process
+- **Socratic Hints**: Get guidance without spoiling the answer
+- **XP & Progression**: Earn rewards for thoughtful responses
+- **Quality Bonuses**: Extra XP for detailed, well-thought-out answers
 
 Synapse is more than just an app; it's a statement. It's for those who believe that the true purpose of technology is not to think for us, but to help us think better.
+
+**Ready to deploy and change how people think! 🧠✨**

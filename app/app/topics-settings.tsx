@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Alert, StyleSheet, ScrollView } from 'react-native';
-import { databases, account } from '../lib/appwrite';
+import { databases, account, safeDatabaseOperation } from '../lib/appwrite';
 import { useRouter } from 'expo-router';
 import { COLORS, FONTS } from '../theme';
 import { Check } from 'lucide-react-native';
@@ -24,12 +24,36 @@ export default function TopicsSettings() {
         setUser(userData);
         
         // Load selected topics from user profile
-        const userDoc = await databases.getDocument('synapse', 'users', userData.$id);
-        setSelectedTopics(userDoc.selectedTopics || []);
+        const userResult = await safeDatabaseOperation(
+          () => databases.getDocument('synapse', 'users', userData.$id),
+          'Failed to load user data'
+        );
+
+        if (!userResult.success || !userResult.data) {
+          Alert.alert('Error', userResult.error || 'Failed to load user data');
+          if (userResult.error?.includes('Session expired') || userResult.error?.includes('No active session')) {
+            router.push('/login');
+          }
+          return;
+        }
+
+        setSelectedTopics(userResult.data.selectedTopics || []);
         
         // Fetch all challenges and group by topicName
-        const challengesResponse = await databases.listDocuments('synapse', 'challenges');
-        const challenges = challengesResponse.documents;
+        const challengesResult = await safeDatabaseOperation(
+          () => databases.listDocuments('synapse', 'challenges'),
+          'Failed to load challenges'
+        );
+
+        if (!challengesResult.success || !challengesResult.data) {
+          Alert.alert('Error', challengesResult.error || 'Failed to load topics');
+          if (challengesResult.error?.includes('Session expired') || challengesResult.error?.includes('No active session')) {
+            router.push('/login');
+          }
+          return;
+        }
+
+        const challenges = challengesResult.data.documents;
         
         // Group challenges by topicName and count them
         const topicMap = new Map<string, number>();
@@ -48,6 +72,7 @@ export default function TopicsSettings() {
         
         setTopics(derivedTopics);
       } catch (e) {
+        console.error('Error in init:', e);
         Alert.alert('Error', 'Failed to load topics');
         router.back();
       }
@@ -70,11 +95,22 @@ export default function TopicsSettings() {
 
     setLoading(true);
     try {
-      await databases.updateDocument('synapse', 'users', user.$id, {
-        selectedTopics: selectedTopics
-      });
-      Alert.alert('Success', 'Topics updated successfully');
-      router.back();
+      const result = await safeDatabaseOperation(
+        () => databases.updateDocument('synapse', 'users', user.$id, {
+          selectedTopics: selectedTopics
+        }),
+        'Failed to update topics'
+      );
+
+      if (result.success) {
+        Alert.alert('Success', 'Topics updated successfully');
+        router.back();
+      } else {
+        Alert.alert('Error', result.error || 'Failed to update topics');
+        if (result.error?.includes('Session expired') || result.error?.includes('No active session')) {
+          router.push('/login');
+        }
+      }
     } catch (e) {
       Alert.alert('Error', (e as Error).message);
     } finally {
