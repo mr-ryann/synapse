@@ -64,7 +64,8 @@ Generate the challenge now:"""
 def generate_ai_challenge(topic: str, subtopic: str, user_level: int = 1):
     """Generate a new challenge using Gemini AI"""
     try:
-        genai.configure(api_key=os.environ["GEMINI_API_KEY"])
+        # Initialize Gemini
+        genai.configure(api_key=os.environ.get("GEMINI_API_KEY"))
         model = genai.GenerativeModel('gemini-pro')
         
         # Select archetype and mutator based on user level
@@ -111,14 +112,29 @@ def main(context):
     Layer 2: AI Generation (NEW - dynamic challenges)
     """
     try:
-        # Initialize Appwrite
+        # Validate required environment variables
+        required_vars = [
+            "APPWRITE_FUNCTION_API_ENDPOINT",
+            "APPWRITE_DATABASE_ID",
+            "APPWRITE_DATABASES_API_KEY",
+            "GEMINI_API_KEY"
+        ]
+        missing_vars = [var for var in required_vars if not os.environ.get(var)]
+        if missing_vars:
+            return context.res.json({
+                "success": False,
+                "error": f"Missing required environment variables: {', '.join(missing_vars)}"
+            }, 500)
+
+        # Initialize Appwrite (APPWRITE_FUNCTION_PROJECT_ID is automatically provided)
+        project_id = os.environ.get("APPWRITE_FUNCTION_PROJECT_ID")
         client = Client()
-        client.set_endpoint(os.environ["APPWRITE_FUNCTION_API_ENDPOINT"])
-        client.set_project(os.environ["APPWRITE_FUNCTION_PROJECT_ID"])
-        client.set_key(os.environ.get("APPWRITE_DATABASES_API_KEY", context.req.headers.get("x-appwrite-key")))
+        client.set_endpoint(os.environ.get("APPWRITE_FUNCTION_API_ENDPOINT"))
+        client.set_project(project_id)
+        client.set_key(os.environ.get("APPWRITE_DATABASES_API_KEY"))
 
         databases = Databases(client)
-        database_id = os.environ["APPWRITE_DATABASE_ID"]
+        database_id = os.environ.get("APPWRITE_DATABASE_ID")
 
         # Parse request
         data = json.loads(context.req.body) if context.req.body else {}

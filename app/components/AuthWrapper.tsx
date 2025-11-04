@@ -4,7 +4,7 @@ import { account, databases } from '../lib/appwrite';
 import { useUserStore } from '../stores';
 import { useRouter } from 'expo-router';
 import { COLORS } from '../theme/colors';
-import { ID, Permission, Role } from 'appwrite';
+import { ID, Permission, Role } from 'react-native-appwrite';
 
 interface AuthWrapperProps {
   children: React.ReactNode;

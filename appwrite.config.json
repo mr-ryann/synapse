@@ -41,6 +41,24 @@
     },
     "functions": [
         {
+            "$id": "populateChallengePool",
+            "execute": [
+                "any"
+            ],
+            "name": "Populate Challenge Pool",
+            "enabled": true,
+            "logging": true,
+            "runtime": "python-3.12",
+            "scopes": [],
+            "events": [],
+            "schedule": "0 * * * *",
+            "timeout": 300,
+            "entrypoint": "src/main.py",
+            "commands": "pip install -r requirements.txt",
+            "specification": "s-1vcpu-512mb",
+            "path": "functions/Populate Challenge Pool"
+        },
+        {
             "$id": "getChallengeForUser",
             "execute": [
                 "any"
@@ -237,6 +255,24 @@
             "commands": "",
             "specification": "s-1vcpu-512mb",
             "path": "functions/Get Leaderboard"
+        },
+        {
+            "$id": "populate-challenge-pool",
+            "execute": [],
+            "name": "Populate Challenge Pool",
+            "enabled": true,
+            "logging": true,
+            "runtime": "python-3.12",
+            "scopes": [
+                "users.read"
+            ],
+            "events": [],
+            "schedule": "",
+            "timeout": 15,
+            "entrypoint": "src/main.py",
+            "commands": "pip install -r requirements.txt",
+            "specification": "s-0.5vcpu-512mb",
+            "path": "functions/Populate Challenge Pool"
         }
     ],
     "tablesDB": [
@@ -556,6 +592,24 @@
             "rowSecurity": false,
             "columns": [
                 {
+                    "key": "difficulty",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                },
+                {
+                    "key": "xpReward",
+                    "type": "integer",
+                    "required": true,
+                    "array": false,
+                    "min": -9223372036854775808,
+                    "max": 9223372036854775807,
+                    "default": null
+                },
+                {
                     "key": "type",
                     "type": "string",
                     "required": true,
@@ -583,15 +637,6 @@
                     "encrypt": false
                 },
                 {
-                    "key": "difficulty",
-                    "type": "integer",
-                    "required": true,
-                    "array": false,
-                    "min": -9223372036854775808,
-                    "max": 9223372036854775807,
-                    "default": null
-                },
-                {
                     "key": "steps",
                     "type": "string",
                     "required": true,
@@ -601,7 +646,7 @@
                     "encrypt": false
                 },
                 {
-                    "key": "xpReward",
+                    "key": "estimatedTime",
                     "type": "integer",
                     "required": true,
                     "array": false,
@@ -610,13 +655,22 @@
                     "default": null
                 },
                 {
-                    "key": "estimatedTime",
-                    "type": "integer",
+                    "key": "status",
+                    "type": "string",
                     "required": true,
                     "array": false,
-                    "min": -9223372036854775808,
-                    "max": 9223372036854775807,
-                    "default": null
+                    "size": 100,
+                    "default": null,
+                    "encrypt": false
+                },
+                {
+                    "key": "promptText",
+                    "type": "string",
+                    "required": true,
+                    "array": false,
+                    "size": 1024,
+                    "default": null,
+                    "encrypt": false
                 }
             ],
             "indexes": [

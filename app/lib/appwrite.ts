@@ -1,10 +1,12 @@
-import { Client, Account, Databases, Functions, ExecutionMethod, AppwriteException } from 'appwrite'
+import { Client, Account, Databases, Functions, ExecutionMethod, AppwriteException } from 'react-native-appwrite'
+import 'react-native-url-polyfill/auto' // Required for React Native
 
 const client = new Client()
 
 client
   .setEndpoint(process.env.EXPO_PUBLIC_APPWRITE_ENDPOINT || 'https://syd.cloud.appwrite.io/v1')
   .setProject(process.env.EXPO_PUBLIC_APPWRITE_PROJECT_ID || '68d158780003f084d817')
+  .setPlatform('com.synaspe.app') // iOS bundle ID from app.json - enables console connection detection
 
 export const account = new Account(client)
 export const databases = new Databases(client)

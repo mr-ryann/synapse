@@ -10,10 +10,24 @@ def main(context):
     Handles OAuth callback and creates/updates user profile
     """
     try:
-        # Initialize Appwrite client
+        # Validate required environment variables
+        required_vars = [
+            "APPWRITE_FUNCTION_API_ENDPOINT",
+            "APPWRITE_DATABASE_ID",
+            "APPWRITE_DATABASES_API_KEY"
+        ]
+        missing_vars = [var for var in required_vars if not os.environ.get(var)]
+        if missing_vars:
+            return context.res.json({
+                "success": False,
+                "error": f"Missing required environment variables: {', '.join(missing_vars)}"
+            }, 500)
+
+        # Initialize Appwrite client (APPWRITE_FUNCTION_PROJECT_ID is automatically provided)
+        project_id = os.environ.get("APPWRITE_FUNCTION_PROJECT_ID")
         client = Client()
-        client.set_endpoint(os.environ["APPWRITE_FUNCTION_API_ENDPOINT"])
-        client.set_project(os.environ["APPWRITE_FUNCTION_PROJECT_ID"])
+        client.set_endpoint(os.environ.get("APPWRITE_FUNCTION_API_ENDPOINT"))
+        client.set_project(project_id)
         
         # Parse request
         data = json.loads(context.req.body) if context.req.body else {}
@@ -37,12 +51,12 @@ def main(context):
 
         # Initialize database client with API key
         db_client = Client()
-        db_client.set_endpoint(os.environ["APPWRITE_FUNCTION_API_ENDPOINT"])
-        db_client.set_project(os.environ["APPWRITE_FUNCTION_PROJECT_ID"])
-        db_client.set_key(os.environ.get("APPWRITE_DATABASES_API_KEY", context.req.headers.get("x-appwrite-key")))
+        db_client.set_endpoint(os.environ.get("APPWRITE_FUNCTION_API_ENDPOINT"))
+        db_client.set_project(project_id)
+        db_client.set_key(os.environ.get("APPWRITE_DATABASES_API_KEY"))
         
         databases = Databases(db_client)
-        database_id = os.environ["APPWRITE_DATABASE_ID"]
+        database_id = os.environ.get("APPWRITE_DATABASE_ID")
 
         # Check if user profile exists
         try:

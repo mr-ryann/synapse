@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Alert } from 'react-native';
 import { account, databases } from '../lib/appwrite';
-import { ID, OAuthProvider } from 'appwrite';
+import { ID, OAuthProvider } from 'react-native-appwrite';
 import { useRouter } from 'expo-router';
 import { useUserStore } from '../stores';
 

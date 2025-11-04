@@ -1,4 +1,4 @@
-context/
+
 .env
 .env.*
 node_modules/
@@ -7,8 +7,7 @@ node_modules/
 .expo-shared/
 web-build/
 dist/
-*.md
-!README.md
+
 *.log
 npm-debug.*
 *.jks
@@ -22,4 +21,11 @@ gluestack-starter/
 scripts/
 questions.json
 .github/
+context/
+
+__pyache__/
+*.pyc
+
+*.md
+!README.md
 

@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View, ActivityIndicator, TouchableOpacity
 import { useUserStore } from '../../stores/useUserStore';
 import { useRouter } from 'expo-router';
 import { databases, functions } from '../../lib/appwrite';
-import { Query } from 'appwrite';
+import { Query } from 'react-native-appwrite';
 
 // Import components
 import { ChallengeCard } from '../../components/cards/ChallengeCard';
