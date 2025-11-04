@@ -7,7 +7,7 @@ from appwrite.query import Query
 import google.generativeai as genai
 
 # Configuration
-POOL_MINIMUM = 150  # Minimum number of unused challenges to maintain
+POOL_MINIMUM = 100  # Minimum number of unused challenges to maintain
 
 # Challenge Generation Configuration
 ARCHETYPES = [
@@ -63,7 +63,7 @@ def generate_challenge(topic_name, archetype, mutator):
             raise Exception("GEMINI_API_KEY not found in environment")
         
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-pro")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         
         # Format prompt
         prompt = MASTER_CHALLENGE_PROMPT.format(
