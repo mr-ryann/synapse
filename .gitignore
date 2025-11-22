@@ -18,13 +18,11 @@ npm-debug.*
 *.mobileprovision
 *.orig.*
 
-gluestack-starter/
 scripts/
-questions.json
 .github/
 context/
 
-__pyache__/
+__pycache__/
 *.pyc
 
 *.md

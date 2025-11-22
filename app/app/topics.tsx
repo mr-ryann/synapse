@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { databases, account, safeDatabaseOperation } from '../lib/appwrite';
+import { Permission, Role } from 'react-native-appwrite';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Home, Search, BookOpen, Settings } from 'lucide-react-native';
@@ -109,9 +110,41 @@ export default function TopicsWithCategories() {
     if (!user) return;
 
     const result = await safeDatabaseOperation(
-      () => databases.updateDocument('synapse', 'users', user.$id, {
-        selectedTopics: newSelected,
-      }),
+      async () => {
+        // Check if user profile exists first
+        try {
+          await databases.getDocument('synapse', 'users', user.$id);
+          // Profile exists, update it
+          return databases.updateDocument('synapse', 'users', user.$id, {
+            selectedTopics: newSelected,
+            lastActiveDate: new Date().toISOString()
+          });
+        } catch (e: any) {
+          if (e.code === 404) {
+            // Profile doesn't exist, create it
+            return databases.createDocument(
+              'synapse',
+              'users',
+              user.$id,
+              {
+                email: user.email,
+                selectedTopics: newSelected,
+                level: 0,
+                xp: 0,
+                streak: 0,
+                completedChallenges: 0,
+                lastActiveDate: new Date().toISOString()
+              },
+              [
+                Permission.read(Role.user(user.$id)),
+                Permission.update(Role.user(user.$id)),
+                Permission.delete(Role.user(user.$id))
+              ]
+            );
+          }
+          throw e;
+        }
+      },
       'Failed to update topics'
     );
 

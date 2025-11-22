@@ -1,2 +1,1 @@
-appwrite==13.6.0
-google-generativeai==0.8.5
+appwrite>=13.0.0

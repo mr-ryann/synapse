@@ -54,7 +54,7 @@
             "schedule": "",
             "timeout": 30,
             "entrypoint": "src/main.py",
-            "commands": "",
+            "commands": "pip install -r requirements.txt",
             "specification": "s-1vcpu-512mb",
             "path": "functions/Get Challenge For User"
         },
@@ -72,7 +72,7 @@
             "schedule": "",
             "timeout": 15,
             "entrypoint": "src/main.py",
-            "commands": "",
+            "commands": "pip install -r requirements.txt",
             "specification": "s-1vcpu-512mb",
             "path": "functions/Submit Challenge Step"
         },
@@ -90,7 +90,7 @@
             "schedule": "",
             "timeout": 15,
             "entrypoint": "src/main.py",
-            "commands": "",
+            "commands": "pip install -r requirements.txt",
             "specification": "s-1vcpu-512mb",
             "path": "functions/Get User Analytics"
         },
@@ -108,7 +108,7 @@
             "schedule": "",
             "timeout": 30,
             "entrypoint": "src/main.py",
-            "commands": "",
+            "commands": "pip install -r requirements.txt",
             "specification": "s-1vcpu-512mb",
             "path": "functions/Get AI Hint"
         },
@@ -126,7 +126,7 @@
             "schedule": "",
             "timeout": 15,
             "entrypoint": "src/main.py",
-            "commands": "",
+            "commands": "pip install -r requirements.txt",
             "specification": "s-1vcpu-512mb",
             "path": "functions/OAuth Callback"
         },
@@ -144,7 +144,7 @@
             "schedule": "",
             "timeout": 15,
             "entrypoint": "src/main.py",
-            "commands": "",
+            "commands": "pip install -r requirements.txt",
             "specification": "s-1vcpu-512mb",
             "path": "functions/Verify Email"
         },
@@ -162,7 +162,7 @@
             "schedule": "",
             "timeout": 15,
             "entrypoint": "src/main.py",
-            "commands": "",
+            "commands": "pip install -r requirements.txt",
             "specification": "s-1vcpu-512mb",
             "path": "functions/Password Reset"
         }

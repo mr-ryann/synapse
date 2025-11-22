@@ -41,6 +41,7 @@ def main(context):
         data = json.loads(context.req.body) if context.req.body else {}
         user_id = data.get("userId")
         mode = data.get("mode", "recommended")  # "recommended" or "all"
+        topic_filter = data.get("topicFilter")  # Optional: filter by specific topicID
 
         if not user_id:
             return context.res.json({"success": False, "error": "userId required"}, 400)
@@ -89,7 +90,7 @@ def main(context):
                 if c.get("topicID") in selected_topics and c["$id"] not in seen_challenge_ids
             ]
         elif mode == "all":
-            # LIBRARY SCREEN: Show ALL unused challenges
+            # LIBRARY/TOPICS SCREEN: Show ALL unused challenges (optionally filtered by topic)
             challenges_response = databases.list_documents(
                 database_id=database_id,
                 collection_id="challenges",
@@ -99,11 +100,18 @@ def main(context):
                 ]
             )
             
-            # Exclude only seen challenges (no topic filter)
+            # Exclude only seen challenges
             available_challenges = [
                 c for c in challenges_response["documents"]
                 if c["$id"] not in seen_challenge_ids
             ]
+            
+            # If topicFilter is provided, filter by that specific topic
+            if topic_filter:
+                available_challenges = [
+                    c for c in available_challenges
+                    if c.get("topicID") == topic_filter
+                ]
         else:
             return context.res.json({"success": False, "error": "Invalid mode. Use 'recommended' or 'all'"}, 400)
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { databases, account } from '../lib/appwrite';
+import { Permission, Role, ID } from 'react-native-appwrite';
 import { useRouter } from 'expo-router';
 import { COLORS, FONTS } from '../theme';
 
@@ -50,15 +51,63 @@ export default function Onboarding() {
 
     setLoading(true);
     try {
-      // Update user profile with selected topics
-      await databases.updateDocument('synapse', 'users', user.$id, {
-        selectedTopics
-      });
+      console.log('🔵 Starting onboarding for user:', user.$id);
+      console.log('🔵 Selected topics:', selectedTopics);
       
+      // Check if user profile document exists
+      let userProfile;
+      try {
+        console.log('🔵 Checking if user profile exists...');
+        userProfile = await databases.getDocument('synapse', 'users', user.$id);
+        console.log('✅ User profile found:', userProfile);
+      } catch (e: any) {
+        console.log('ℹ️ User profile not found (will create):', e.message);
+        userProfile = null;
+      }
+
+      if (userProfile) {
+        console.log('🔵 Updating existing user profile...');
+        const updated = await databases.updateDocument('synapse', 'users', user.$id, {
+          selectedTopics,
+          lastActiveDate: new Date().toISOString()
+        });
+        console.log('✅ Profile updated:', updated);
+      } else {
+        console.log('🔵 Creating new user profile...');
+        const permissions = [
+          Permission.read(Role.user(user.$id)),
+          Permission.update(Role.user(user.$id)),
+          Permission.delete(Role.user(user.$id))
+        ];
+        console.log('🔵 Permissions:', permissions);
+        
+        const created = await databases.createDocument(
+          'synapse',
+          'users',
+          user.$id, // Use auth user ID as document ID
+          {
+            email: user.email,
+            selectedTopics,
+            level: 0,
+            xp: 0,
+            streak: 0,
+            completedChallenges: 0,
+            lastActiveDate: new Date().toISOString()
+          },
+          permissions
+        );
+        console.log('✅ Profile created:', created);
+      }
+      
+      console.log('✅ Onboarding completed successfully');
       Alert.alert('Success', 'Your preferences have been saved!');
       router.push('/home');
-    } catch (e) {
-      Alert.alert('Error', (e as Error).message);
+    } catch (e: any) {
+      console.error('❌ Error saving topics:', e);
+      console.error('❌ Error code:', e.code);
+      console.error('❌ Error type:', e.type);
+      console.error('❌ Full error:', JSON.stringify(e, null, 2));
+      Alert.alert('Error', `${e.message}\n\nCode: ${e.code || 'unknown'}`);
     } finally {
       setLoading(false);
     }

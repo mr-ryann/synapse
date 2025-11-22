@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, Alert, StyleSheet, ScrollView, Dimensions } from 'react-native';
-import { databases, account } from '../../lib/appwrite';
+import { View, Text, TouchableOpacity, Alert, StyleSheet, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
+import { databases, account, functions } from '../../lib/appwrite';
 import { useRouter } from 'expo-router';
 import { COLORS, FONTS } from '../../theme';
 
 interface Topic {
   name: string;
+  topicID: string;
   count: number;
 }
 
@@ -14,8 +15,8 @@ const CARD_WIDTH = width * 0.75; // 75% of screen width for carousel effect
 
 export default function Topics() {
   const [topics, setTopics] = useState<Topic[]>([]);
-  const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
   const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -23,66 +24,82 @@ export default function Topics() {
       try {
         const userData = await account.get();
         setUser(userData);
-        // Load selected topics from user profile
-        const userDoc = await databases.getDocument('synapse', 'users', userData.$id);
-        setSelectedTopics(userDoc.selectedTopics || []);
         
         // Fetch all challenges and group by topicName to get unique topics with counts
         const challengesResponse = await databases.listDocuments('synapse', 'challenges');
         const challenges = challengesResponse.documents;
         
-        // Group challenges by topicName and count them
-        const topicMap = new Map<string, number>();
+        // Group challenges by topicName and topicID, count them
+        const topicMap = new Map<string, { topicID: string; count: number }>();
         challenges.forEach((challenge: any) => {
           const topicName = challenge.topicName;
-          if (topicName) {
-            topicMap.set(topicName, (topicMap.get(topicName) || 0) + 1);
+          const topicID = challenge.topicID;
+          if (topicName && topicID) {
+            const existing = topicMap.get(topicName);
+            topicMap.set(topicName, {
+              topicID,
+              count: (existing?.count || 0) + 1,
+            });
           }
         });
         
         // Convert to Topic array
-        const derivedTopics: Topic[] = Array.from(topicMap.entries()).map(([name, count]) => ({
+        const derivedTopics: Topic[] = Array.from(topicMap.entries()).map(([name, data]) => ({
           name,
-          count,
+          topicID: data.topicID,
+          count: data.count,
         }));
         
         setTopics(derivedTopics);
       } catch (e) {
-        router.push('/login');
+        Alert.alert('Error', 'Failed to load topics');
+      } finally {
+        setLoading(false);
       }
     };
     init();
   }, []);
 
-  const toggleTopic = async (topicName: string) => {
-    const newSelected = selectedTopics.includes(topicName)
-      ? selectedTopics.filter(name => name !== topicName)
-      : [...selectedTopics, topicName];
-    setSelectedTopics(newSelected);
+  const selectTopicForChallenge = async (topicName: string, topicID: string) => {
     try {
-      await databases.updateDocument('synapse', 'users', user.$id, {
-        selectedTopics: newSelected
-      });
-    } catch (e) {
-      Alert.alert('Error', (e as Error).message);
+      // Call the function to get a challenge for this specific topic
+      const execution = await functions.createExecution(
+        'getChallengeForUser',
+        JSON.stringify({ 
+          userId: user.$id, 
+          mode: 'all', // Use 'all' mode to get any challenge
+          topicFilter: topicID // Pass topic filter
+        })
+      );
+      
+      const result = JSON.parse(execution.responseBody);
+      if (result.success) {
+        // Navigate to challenge player with the challenge ID
+        router.push(`/challenge-player?challengeId=${result.data.id}`);
+      } else {
+        Alert.alert('No Challenges', `No challenges available for ${topicName}. ${result.error || ''}`);
+      }
+    } catch (err) {
+      Alert.alert('Error', 'Failed to load challenge. Please try again.');
     }
   };
 
-  const selectTopicForChallenge = (topicName: string) => {
-    // Navigate to challenge player with selected topic
-    router.push({
-      pathname: '/(tabs)/challenge-player',
-      params: { topicName }
-    });
-  };
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={COLORS.accent.primary} />
+        <Text style={styles.loadingText}>Loading topics...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <ScrollView style={styles.scrollContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.headerSection}>
-          <Text style={styles.heading}>Choose a Topic</Text>
+          <Text style={styles.heading}>Explore All Topics</Text>
           <Text style={styles.subtitle}>
-            Select a topic to start your critical thinking challenge
+            Browse challenges across different subjects and discover new ways of thinking
           </Text>
         </View>
         
@@ -97,7 +114,7 @@ export default function Topics() {
             {topics.map((item) => (
               <TouchableOpacity
                 key={item.name}
-                onPress={() => selectTopicForChallenge(item.name)}
+                onPress={() => selectTopicForChallenge(item.name, item.topicID)}
                 activeOpacity={0.85}
                 style={styles.topicCard}
               >
@@ -105,7 +122,7 @@ export default function Topics() {
                   {item.name}
                 </Text>
                 <Text style={styles.topicCount}>
-                  {item.count} challenges
+                  {item.count} {item.count === 1 ? 'challenge' : 'challenges'}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -117,6 +134,18 @@ export default function Topics() {
 }
 
 const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.background.primary,
+    gap: 16,
+  },
+  loadingText: {
+    fontFamily: FONTS.body,
+    fontSize: 16,
+    color: COLORS.text.secondary,
+  },
   container: {
     flex: 1,
     backgroundColor: COLORS.background.primary,
