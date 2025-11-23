@@ -59,18 +59,25 @@ export default function HomeScreen() {
 
       // Fetch recommended challenge from function
       try {
+        console.log('🔵 Fetching recommended challenge for user:', user?.$id);
         const execution = await functions.createExecution(
           'getChallengeForUser',
-          JSON.stringify({ userId: user.$id, mode: 'recommended' })
+          JSON.stringify({ userId: user?.$id, mode: 'recommended' })
         );
         
+        console.log('🔵 Function execution status:', execution.status);
+        console.log('🔵 Function response body:', execution.responseBody);
+        
         if (!execution.responseBody || execution.responseBody.trim() === '') {
-          console.warn('Empty response from getChallengeForUser');
+          console.warn('⚠️ Empty response from getChallengeForUser');
           return;
         }
         
         const result = JSON.parse(execution.responseBody);
+        console.log('🔵 Parsed result:', result);
+        
         if (result.success) {
+          console.log('✅ Recommended challenge loaded:', result.data);
           setDailyProvocation({
             $id: result.data.id,
             promptText: result.data.promptText,
@@ -79,9 +86,12 @@ export default function HomeScreen() {
             estimatedTime: result.data.estimatedTime,
             difficulty: result.data.difficulty,
           });
+        } else {
+          console.warn('⚠️ Function returned error:', result.error);
         }
       } catch (err) {
-        console.error('Error fetching recommended challenge:', err);
+        console.error('❌ Error fetching recommended challenge:', err);
+        console.error('❌ Error details:', JSON.stringify(err, null, 2));
       }
 
       // Fetch topics with challenge counts
@@ -143,25 +153,25 @@ export default function HomeScreen() {
           {getGreeting()}, {user?.name || 'Explorer'}.
         </Text>
 
-        {/* Challenge Cards at Top */}
+        {/* Challenge Cards - Dynamic Layout */}
         <View style={styles.challengesContainer}>
-          {/* Challenge of the Day */}
-          {dailyProvocation && (
-            <ChallengeCard
-              challenge={dailyProvocation}
-              onPress={() => navigateToChallenge(dailyProvocation.$id)}
-              buttonText="Start Thinking"
-              isFeatured={true}
-            />
-          )}
-
-          {/* Resume Last Thought - Only if in progress challenge exists */}
+          {/* Resume In-Progress Challenge (Priority) */}
           {inProgressChallenge && (
             <ChallengeCard
               challenge={inProgressChallenge}
               onPress={() => navigateToChallenge(inProgressChallenge.$id)}
               buttonText="Continue Thinking"
-              isFeatured={false}
+              isFeatured={true}
+            />
+          )}
+
+          {/* Daily Provocation - Takes full space if no in-progress challenge */}
+          {dailyProvocation && (
+            <ChallengeCard
+              challenge={dailyProvocation}
+              onPress={() => navigateToChallenge(dailyProvocation.$id)}
+              buttonText={inProgressChallenge ? "New Challenge" : "Start Thinking"}
+              isFeatured={!inProgressChallenge}
             />
           )}
         </View>

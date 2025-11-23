@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Alert, StyleSheet, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
-import { databases, account, functions } from '../../lib/appwrite';
+import { databases, account } from '../../lib/appwrite';
 import { useRouter } from 'expo-router';
 import { COLORS, FONTS } from '../../theme';
 
@@ -62,24 +62,24 @@ export default function Topics() {
 
   const selectTopicForChallenge = async (topicName: string, topicID: string) => {
     try {
-      // Call the function to get a challenge for this specific topic
-      const execution = await functions.createExecution(
-        'getChallengeForUser',
-        JSON.stringify({ 
-          userId: user.$id, 
-          mode: 'all', // Use 'all' mode to get any challenge
-          topicFilter: topicID // Pass topic filter
-        })
+      // Fetch all challenges for this topic
+      const challengesResponse = await databases.listDocuments('synapse', 'challenges');
+      const topicChallenges = challengesResponse.documents.filter(
+        (c: any) => c.topicID === topicID
       );
       
-      const result = JSON.parse(execution.responseBody);
-      if (result.success) {
-        // Navigate to challenge player with the challenge ID
-        router.push(`/challenge-player?challengeId=${result.data.id}`);
-      } else {
-        Alert.alert('No Challenges', `No challenges available for ${topicName}. ${result.error || ''}`);
+      if (topicChallenges.length === 0) {
+        Alert.alert('No Challenges', `No challenges available for ${topicName}.`);
+        return;
       }
+      
+      // Pick a random challenge from this topic
+      const randomChallenge = topicChallenges[Math.floor(Math.random() * topicChallenges.length)];
+      
+      // Navigate to challenge player with the challenge ID
+      router.push(`/challenge-player?challengeId=${randomChallenge.$id}`);
     } catch (err) {
+      console.error('Error loading challenge:', err);
       Alert.alert('Error', 'Failed to load challenge. Please try again.');
     }
   };

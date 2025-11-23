@@ -11,7 +11,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Text } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Lightbulb, Send } from 'lucide-react-native';
 
 import { databases, functions, account } from '../../lib/appwrite';
@@ -24,9 +24,10 @@ import { COLORS, FONTS } from '../../theme';
 
 interface Challenge {
   id: string;
-  promptText: string;  // Changed from coreProvocation
+  title: string;
+  questions: string[];
   topic: string;
-  topicID: string;  // Matches Appwrite schema
+  topicID: string;
   estimatedTime: number;
   difficulty: number;
   archetype?: string;
@@ -37,6 +38,7 @@ interface Challenge {
 
 export default function ChallengePlayer() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const { user } = useUserStore();
   const {
     currentChallenge,
@@ -55,6 +57,11 @@ export default function ChallengePlayer() {
   const [loadingHint, setLoadingHint] = useState(false);
   const [showHintModal, setShowHintModal] = useState(false);
   const [challengeStartTime] = useState(Date.now());
+  
+  // Multi-step question state
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [questionStartTime, setQuestionStartTime] = useState(Date.now());
+  const [allQuestions, setAllQuestions] = useState<string[]>([]);
 
   // Load initial challenge
   useEffect(() => {
@@ -64,7 +71,7 @@ export default function ChallengePlayer() {
       // Cleanup on unmount
       resetChallengeSession();
     };
-  }, []);
+  }, [params.challengeId]); // Reload when challengeId changes
 
   /**
    * WIRING: Get Challenge from Backend
@@ -78,7 +85,41 @@ export default function ChallengePlayer() {
 
     setLoading(true);
     try {
-      console.log('🔵 Loading challenge for user:', user.$id);
+      const challengeId = params.challengeId as string;
+      
+      // If challengeId is provided, load that specific challenge directly
+      if (challengeId) {
+        console.log('🔵 Loading specific challenge:', challengeId);
+        
+        const challengeDoc = await databases.getDocument(
+          'synapse',
+          'challenges',
+          challengeId
+        );
+        
+        const challengeData: Challenge = {
+          id: challengeDoc.$id,
+          title: challengeDoc.title || challengeDoc.topicName,
+          questions: challengeDoc.questions || [],
+          topic: challengeDoc.topicName,
+          topicID: challengeDoc.topicID,
+          estimatedTime: challengeDoc.estimatedTime || 8,
+          difficulty: challengeDoc.difficulty || 1,
+          archetype: challengeDoc.archetype,
+          mutator: challengeDoc.mutator,
+        };
+        
+        console.log('✅ Challenge loaded successfully:', challengeData);
+        setCurrentChallenge(challengeData);
+        setAllQuestions(challengeDoc.questions || []);
+        setCurrentQuestionIndex(0);
+        setQuestionStartTime(Date.now());
+        setLoading(false);
+        return;
+      }
+      
+      // Otherwise, get a recommended challenge from the function
+      console.log('🔵 Loading recommended challenge for user:', user.$id);
       
       const execution = await functions.createExecution(
         'getChallengeForUser',
@@ -133,7 +174,8 @@ export default function ChallengePlayer() {
       if (result.success) {
         const challengeData: Challenge = {
           id: result.data.id,
-          promptText: result.data.promptText,
+          title: result.data.title || result.data.topic,
+          questions: result.data.questions || [],
           topic: result.data.topic,
           topicID: result.data.topicID,
           estimatedTime: result.data.estimatedTime || 8,
@@ -146,6 +188,9 @@ export default function ChallengePlayer() {
         
         console.log('✅ Challenge loaded successfully:', challengeData);
         setCurrentChallenge(challengeData);
+        setAllQuestions(result.data.questions || []);
+        setCurrentQuestionIndex(0);
+        setQuestionStartTime(Date.now());
       } else {
         console.error('❌ Function returned error:', result.error);
         throw new Error(result.error || 'Failed to load challenge');
@@ -202,59 +247,103 @@ export default function ChallengePlayer() {
   };
 
   /**
-   * WIRING: Submit Challenge Response
+   * WIRING: Submit Question Response (Multi-Step)
    */
-  const handleSubmitThoughts = async () => {
+  const handleNextQuestion = async () => {
     if (!currentChallenge || !user || !responseText.trim()) return;
+    if (allQuestions.length === 0) return;
 
-    const totalThinkingTime = Math.floor((Date.now() - challengeStartTime) / 1000);
+    const currentQuestion = allQuestions[currentQuestionIndex];
+    const questionThinkingTime = Math.floor((Date.now() - questionStartTime) / 1000);
 
     setLoading(true);
     try {
+      console.log('🔵 Submitting question', currentQuestionIndex + 1, 'of', allQuestions.length);
+      console.log('🔵 Question:', currentQuestion);
+      console.log('🔵 Response length:', responseText.length);
+      console.log('🔵 Thinking time:', questionThinkingTime);
+      
       const execution = await functions.createExecution(
-        'submit-challenge-step',
+        'submit-challenge',
         JSON.stringify({
           userId: user.$id,
           challengeId: currentChallenge.id,
+          questionIndex: currentQuestionIndex,
+          questionText: currentQuestion,
           responseText: responseText,
-          thinkingTime: totalThinkingTime,
+          thinkingTime: questionThinkingTime,
         })
       );
 
+      console.log('🔵 Submit execution response:', execution);
+
+      if (execution.status === 'failed') {
+        throw new Error('Function execution failed. Check Appwrite console for logs.');
+      }
+
+      if (!execution.responseBody || execution.responseBody.trim() === '') {
+        throw new Error('Function returned empty response. Check environment variables.');
+      }
+
       const result = JSON.parse(execution.responseBody);
+      console.log('🔵 Parsed submit result:', result);
 
       if (result.success) {
-        const minutes = Math.floor(totalThinkingTime / 60);
-        const seconds = totalThinkingTime % 60;
-        const timeStr = minutes > 0 ? `${minutes}m ${seconds}s` : `${seconds}s`;
-
-        // Show success feedback
-        Alert.alert(
-          'Great Thinking! 🧠',
-          `You earned ${result.data.xpEarned} XP!\n\nThinking Time: ${timeStr}`,
-          [
-            {
-              text: 'Next Challenge',
-              onPress: () => {
-                resetChallengeSession();
-                setResponseText('');
-                setIsThinking(false);
-                loadChallenge();
+        const { data } = result;
+        
+        if (data.isLastQuestion) {
+          // Challenge completed - show total results
+          Alert.alert(
+            '🎉 Challenge Complete!',
+            `Amazing work! You earned ${data.totalXpEarned} XP!\n\n` +
+            `Questions answered: ${data.questionsAnswered}/${data.totalQuestions}\n` +
+            `Level: ${data.level}\n` +
+            `Streak: ${data.streak} 🔥`,
+            [
+              {
+                text: 'Next Challenge',
+                onPress: () => {
+                  resetChallengeSession();
+                  setResponseText('');
+                  setCurrentQuestionIndex(0);
+                  setAllQuestions([]);
+                  loadChallenge();
+                },
               },
-            },
-            {
-              text: 'Go Home',
-              onPress: () => router.push('/home'),
-              style: 'cancel',
-            },
-          ]
-        );
+              {
+                text: 'Go Home',
+                onPress: () => router.push('/home'),
+                style: 'cancel',
+              },
+            ]
+          );
+        } else {
+          // Move to next question
+          setCurrentQuestionIndex(prev => prev + 1);
+          setResponseText('');
+          setQuestionStartTime(Date.now());
+          
+          // Show progress feedback
+          Alert.alert(
+            '✅ Question Saved!',
+            `You earned ${data.xpEarnedThisQuestion} XP!\n\n` +
+            `Progress: ${data.questionsAnswered}/${data.totalQuestions} questions completed`,
+            [{ text: 'Continue' }]
+          );
+        }
       } else {
         throw new Error(result.error || 'Failed to submit response');
       }
-    } catch (error) {
-      console.error('Error submitting response:', error);
-      Alert.alert('Error', 'Failed to submit your thoughts. Please try again.');
+    } catch (error: any) {
+      console.error('❌ Error submitting question:', error);
+      console.error('❌ Error message:', error.message);
+      
+      let errorMessage = 'Failed to submit your answer. Please try again.';
+      if (error.message) {
+        errorMessage += `\n\nDetails: ${error.message}`;
+      }
+      
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
@@ -302,12 +391,31 @@ export default function ChallengePlayer() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
+          {/* Progress Indicator */}
+          {allQuestions.length > 0 && (
+            <View style={styles.progressContainer}>
+              <Text style={styles.progressText}>
+                Question {currentQuestionIndex + 1} of {allQuestions.length}
+              </Text>
+              <View style={styles.progressBar}>
+                <View 
+                  style={[
+                    styles.progressFill, 
+                    { width: `${((currentQuestionIndex + 1) / allQuestions.length) * 100}%` }
+                  ]} 
+                />
+              </View>
+            </View>
+          )}
+
           {/* Challenge Section */}
           <View style={styles.section}>
-            <Text style={styles.challengeTitle}>{currentChallenge.topic}</Text>
-            <Text style={styles.challengeProvocation}>
-              {currentChallenge.promptText}
-            </Text>
+            <Text style={styles.challengeTitle}>{currentChallenge.title}</Text>
+            {allQuestions.length > 0 && (
+              <Text style={styles.questionText}>
+                {allQuestions[currentQuestionIndex]}
+              </Text>
+            )}
           </View>
 
           {/* Thinking Timer */}
@@ -366,14 +474,18 @@ export default function ChallengePlayer() {
                 styles.submitButton,
                 (!responseText.trim() || loading) && styles.submitButtonDisabled,
               ]}
-              onPress={handleSubmitThoughts}
+              onPress={handleNextQuestion}
               disabled={!responseText.trim() || loading}
             >
               {loading ? (
                 <ActivityIndicator size="small" color={COLORS.background.primary} />
               ) : (
                 <>
-                  <Text style={styles.submitButtonText}>Submit Thoughts</Text>
+                  <Text style={styles.submitButtonText}>
+                    {currentQuestionIndex === allQuestions.length - 1
+                      ? 'Complete Challenge'
+                      : 'Next Question'}
+                  </Text>
                   <Send size={20} color={COLORS.background.primary} />
                 </>
               )}
@@ -418,11 +530,35 @@ const styles = StyleSheet.create({
     lineHeight: 36,
     marginBottom: 12,
   },
-  challengeProvocation: {
-    fontSize: 18,
+  progressContainer: {
+    marginBottom: 20,
+  },
+  progressText: {
+    fontSize: 14,
     fontFamily: FONTS.body,
+    fontWeight: '600',
+    color: COLORS.text.secondary,
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: COLORS.border.default,
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: COLORS.accent.primary,
+    borderRadius: 3,
+  },
+  questionText: {
+    fontSize: 20,
+    fontFamily: FONTS.body,
+    fontWeight: '600',
     color: COLORS.text.primary,
-    lineHeight: 28,
+    lineHeight: 32,
+    marginTop: 16,
   },
   timerContainer: {
     marginBottom: 24,

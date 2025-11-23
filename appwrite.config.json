@@ -59,24 +59,6 @@
             "path": "functions/Get Challenge For User"
         },
         {
-            "$id": "submit-challenge-step",
-            "execute": [
-                "any"
-            ],
-            "name": "Submit Challenge Step",
-            "enabled": true,
-            "logging": true,
-            "runtime": "python-3.12",
-            "scopes": [],
-            "events": [],
-            "schedule": "",
-            "timeout": 15,
-            "entrypoint": "src/main.py",
-            "commands": "pip install -r requirements.txt",
-            "specification": "s-1vcpu-512mb",
-            "path": "functions/Submit Challenge Step"
-        },
-        {
             "$id": "get-user-analytics",
             "execute": [
                 "any"
@@ -165,6 +147,42 @@
             "commands": "pip install -r requirements.txt",
             "specification": "s-1vcpu-512mb",
             "path": "functions/Password Reset"
+        },
+        {
+            "$id": "submit-challenge",
+            "execute": [
+                "any"
+            ],
+            "name": "Submit Challenge",
+            "enabled": true,
+            "logging": true,
+            "runtime": "python-3.12",
+            "scopes": [
+                "users.read",
+                "databases.read",
+                "databases.write",
+                "tables.read",
+                "collections.read",
+                "tables.write",
+                "collections.write",
+                "columns.read",
+                "attributes.read",
+                "columns.write",
+                "attributes.write",
+                "indexes.read",
+                "indexes.write",
+                "rows.read",
+                "documents.read",
+                "rows.write",
+                "documents.write"
+            ],
+            "events": [],
+            "schedule": "",
+            "timeout": 15,
+            "entrypoint": "src/main.py",
+            "commands": "pip install -r requirements.txt",
+            "specification": "s-0.5vcpu-512mb",
+            "path": "functions/Submit Challenge"
         }
     ],
     "tablesDB": [

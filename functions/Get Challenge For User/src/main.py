@@ -59,9 +59,7 @@ def main(context):
         if mode == "recommended" and not selected_topics:
             return context.res.json({"success": False, "error": "No topics selected. Please select topics first."}, 400)
 
-        user_level = user_doc.get("level", 1)
-
-        # Get challenge history to avoid duplicates
+        # Get challenge history to avoid showing completed challenges in recommendations
         try:
             history_response = databases.list_documents(
                 database_id=database_id,
@@ -74,37 +72,27 @@ def main(context):
 
         # Build query based on mode
         if mode == "recommended":
-            # HOME SCREEN: Show only challenges in user's selected topics
+            # HOME SCREEN RECOMMENDATION: Show only challenges in user's selected topics (exclude completed)
             challenges_response = databases.list_documents(
                 database_id=database_id,
                 collection_id="challenges",
-                queries=[
-                    Query.equal("status", ["unused"]),
-                    Query.limit(100)
-                ]
+                queries=[Query.limit(100)]
             )
             
-            # Filter by user's topics
+            # Filter by user's topics and exclude seen challenges
             available_challenges = [
                 c for c in challenges_response["documents"]
                 if c.get("topicID") in selected_topics and c["$id"] not in seen_challenge_ids
             ]
         elif mode == "all":
-            # LIBRARY/TOPICS SCREEN: Show ALL unused challenges (optionally filtered by topic)
+            # TOPICS/LIBRARY SCREEN: Show ALL challenges (no filtering)
             challenges_response = databases.list_documents(
                 database_id=database_id,
                 collection_id="challenges",
-                queries=[
-                    Query.equal("status", ["unused"]),
-                    Query.limit(100)
-                ]
+                queries=[Query.limit(100)]
             )
             
-            # Exclude only seen challenges
-            available_challenges = [
-                c for c in challenges_response["documents"]
-                if c["$id"] not in seen_challenge_ids
-            ]
+            available_challenges = challenges_response["documents"]
             
             # If topicFilter is provided, filter by that specific topic
             if topic_filter:
@@ -119,32 +107,33 @@ def main(context):
         if available_challenges:
             challenge = random.choice(available_challenges)
             
-            # Mark challenge as USED
-            databases.update_document(
-                database_id=database_id,
-                collection_id="challenges",
-                document_id=challenge["$id"],
-                data={"status": "used"}
-            )
-            
-            # Record in history
-            databases.create_document(
-                database_id=database_id,
-                collection_id="user_challenge_history",
-                document_id="unique()",
-                data={
-                    "userId": user_id,
-                    "challengeId": challenge["$id"],
-                    "startedAt": datetime.utcnow().isoformat(),
-                    "status": "in_progress",
-                    "source": mode  # "recommended" or "all"
-                }
-            )
+            # For recommended mode, mark as used by creating history entry
+            if mode == "recommended":
+                try:
+                    # Record in history (only for recommendations to track seen challenges)
+                    databases.create_document(
+                        database_id=database_id,
+                        collection_id="user_challenge_history",
+                        document_id="unique()",
+                        data={
+                            "userId": user_id,
+                            "challengeId": challenge["$id"],
+                            "timestamp": datetime.utcnow().isoformat(),
+                            "challengeType": challenge.get("type", "TEXT"),
+                            "completionTime": 0,
+                            "xpEarned": 0,
+                        }
+                    )
+                except Exception as e:
+                    # History creation failed, but continue with challenge
+                    context.log(f"Failed to create history: {str(e)}")
 
             return context.res.json({
                 "success": True,
                 "data": {
                     "id": challenge["$id"],
+                    "title": challenge.get("title", ""),
+                    "questions": challenge.get("questions", []),
                     "promptText": challenge.get("promptText", ""),
                     "topic": challenge.get("topicName", ""),
                     "topicID": challenge.get("topicID", ""),
@@ -158,9 +147,15 @@ def main(context):
             })
         else:
             # No challenges available
+            error_msg = "No challenges available."
+            if mode == "recommended":
+                error_msg = "No new recommended challenges available. Try exploring other topics!"
+            elif topic_filter:
+                error_msg = f"No challenges available for this topic."
+            
             return context.res.json({
                 "success": False,
-                "error": f"No {'recommended' if mode == 'recommended' else ''} challenges available. Please check back later or try a different mode.",
+                "error": error_msg,
                 "mode": mode
             }, 404)
 
