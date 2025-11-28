@@ -83,28 +83,56 @@ def main(context):
 
         context.log(f"XP for this question: {question_xp}")
 
-        response_doc = databases.create_document(
+        # Check if user already answered this question - update instead of create
+        existing_response = databases.list_documents(
             database_id=database_id,
             collection_id="responses",
-            document_id="unique()",
-            data={
-                "userID": user_id,
-                "challengeID": challenge_id,
-                "questionIndex": question_index,
-                "questionText": question_text,
-                "responseText": response_text,
-                "thinkingTime": thinking_time,
-                "xpEarned": question_xp,
-                "submittedAt": datetime.utcnow().isoformat()
-            },
-            permissions=[
-                f'read("user:{user_id}")',
-                f'update("user:{user_id}")',
-                f'delete("user:{user_id}")'
+            queries=[
+                Query.equal("userID", [user_id]),
+                Query.equal("challengeID", [challenge_id]),
+                Query.equal("questionIndex", [question_index]),
+                Query.limit(1)
             ]
         )
-        
-        context.log(f"Response saved with ID: {response_doc['$id']}")
+
+        if existing_response["total"] > 0:
+            # Update existing response
+            response_doc = databases.update_document(
+                database_id=database_id,
+                collection_id="responses",
+                document_id=existing_response["documents"][0]["$id"],
+                data={
+                    "questionText": question_text,
+                    "responseText": response_text,
+                    "thinkingTime": thinking_time,
+                    "xpEarned": question_xp,
+                    "submittedAt": datetime.utcnow().isoformat()
+                }
+            )
+            context.log(f"Response updated with ID: {response_doc['$id']}")
+        else:
+            # Create new response
+            response_doc = databases.create_document(
+                database_id=database_id,
+                collection_id="responses",
+                document_id="unique()",
+                data={
+                    "userID": user_id,
+                    "challengeID": challenge_id,
+                    "questionIndex": question_index,
+                    "questionText": question_text,
+                    "responseText": response_text,
+                    "thinkingTime": thinking_time,
+                    "xpEarned": question_xp,
+                    "submittedAt": datetime.utcnow().isoformat()
+                },
+                permissions=[
+                    f'read("user:{user_id}")',
+                    f'update("user:{user_id}")',
+                    f'delete("user:{user_id}")'
+                ]
+            )
+            context.log(f"Response saved with ID: {response_doc['$id']}")
 
         all_responses = databases.list_documents(
             database_id=database_id,

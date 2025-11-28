@@ -6,14 +6,17 @@ import { COLORS, FONTS } from '../../theme';
 interface ChallengeCardProps {
   challenge: {
     $id: string;
-    title: string;
-    coreProvocation: string;
+    title?: string;
+    coreProvocation?: string;
+    promptText?: string;
     topicName?: string;
     xpReward?: number;
   };
   onPress: () => void;
   buttonText?: string;
   isFeatured?: boolean;
+  fullScreen?: boolean;
+  isCompleted?: boolean;
 }
 
 export const ChallengeCard = React.memo<ChallengeCardProps>(({
@@ -21,25 +24,34 @@ export const ChallengeCard = React.memo<ChallengeCardProps>(({
   onPress,
   buttonText = 'Start Challenge',
   isFeatured = false,
+  fullScreen = false,
+  isCompleted = false,
 }) => {
+  // Support both coreProvocation and promptText for compatibility
+  const provocationText = challenge.coreProvocation || challenge.promptText || '';
+  const titleText = challenge.title || 'Daily Challenge';
+
   return (
-    <TouchableOpacity
-      onPress={onPress}
+    <View
       style={[
         styles.container,
         isFeatured && styles.featuredContainer,
+        fullScreen && styles.fullScreenContainer,
+        isCompleted && styles.completedContainer,
       ]}
     >
       {isFeatured && (
         <View style={styles.featuredBadge}>
-          <Sparkles size={16} color={COLORS.accent.primary} />
-          <Text style={styles.featuredText}>Daily Provocation</Text>
+          <Sparkles size={16} color={isCompleted ? COLORS.accent.secondary : COLORS.accent.primary} />
+          <Text style={[styles.featuredText, isCompleted && styles.completedText]}>
+            {isCompleted ? 'Completed ✓' : "Today's Cognitive Nudge"}
+          </Text>
         </View>
       )}
       
-      <Text style={styles.title}>{challenge.title}</Text>
-      <Text style={styles.provocation} numberOfLines={3}>
-        {challenge.coreProvocation}
+      <Text style={[styles.title, fullScreen && styles.fullScreenTitle]}>{titleText}</Text>
+      <Text style={[styles.provocation, fullScreen && styles.fullScreenProvocation]} numberOfLines={fullScreen ? undefined : 3}>
+        {provocationText}
       </Text>
 
       <View style={styles.footer}>
@@ -51,10 +63,10 @@ export const ChallengeCard = React.memo<ChallengeCardProps>(({
         )}
       </View>
 
-      <View style={styles.button}>
+      <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
         <Text style={styles.buttonText}>{buttonText}</Text>
-      </View>
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </View>
   );
 });
 
@@ -78,6 +90,25 @@ const styles = StyleSheet.create({
     borderColor: COLORS.accent.primary,
     borderWidth: 2,
     backgroundColor: COLORS.background.secondary,
+  },
+  completedContainer: {
+    borderColor: COLORS.accent.secondary,
+  },
+  completedText: {
+    color: COLORS.accent.secondary,
+  },
+  fullScreenContainer: {
+    flex: 1,
+    justifyContent: 'space-between',
+  },
+  fullScreenTitle: {
+    fontSize: 26,
+    marginBottom: 16,
+  },
+  fullScreenProvocation: {
+    fontSize: 18,
+    lineHeight: 28,
+    flex: 1,
   },
   featuredBadge: {
     flexDirection: 'row',

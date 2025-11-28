@@ -89,8 +89,6 @@ export default function ChallengePlayer() {
       
       // If challengeId is provided, load that specific challenge directly
       if (challengeId) {
-        console.log('🔵 Loading specific challenge:', challengeId);
-        
         const challengeDoc = await databases.getDocument(
           'synapse',
           'challenges',
@@ -109,7 +107,6 @@ export default function ChallengePlayer() {
           mutator: challengeDoc.mutator,
         };
         
-        console.log('✅ Challenge loaded successfully:', challengeData);
         setCurrentChallenge(challengeData);
         setAllQuestions(challengeDoc.questions || []);
         setCurrentQuestionIndex(0);
@@ -119,21 +116,13 @@ export default function ChallengePlayer() {
       }
       
       // Otherwise, get a recommended challenge from the function
-      console.log('🔵 Loading recommended challenge for user:', user.$id);
-      
       const execution = await functions.createExecution(
         'getChallengeForUser',
         JSON.stringify({ userId: user.$id, mode: 'recommended' })
       );
 
-      console.log('🔵 Function execution response:', execution);
-      console.log('🔵 Response status:', execution.status);
-      console.log('🔵 Response body:', execution.responseBody);
-      console.log('🔵 Response body length:', execution.responseBody?.length);
-
       // Check if function execution failed
       if (execution.status === 'failed') {
-        console.error('❌ Function execution failed');
         throw new Error(
           'Function execution failed.\n\n' +
           'Possible causes:\n' +
@@ -146,9 +135,6 @@ export default function ChallengePlayer() {
 
       // Check for empty response
       if (!execution.responseBody || execution.responseBody.trim() === '') {
-        console.error('❌ Empty response body');
-        console.error('❌ Execution status:', execution.status);
-        
         throw new Error(
           'Function returned empty response.\n\n' +
           'This usually means:\n' +
@@ -164,10 +150,7 @@ export default function ChallengePlayer() {
       let result;
       try {
         result = JSON.parse(execution.responseBody);
-        console.log('🔵 Parsed result:', result);
       } catch (parseError) {
-        console.error('❌ JSON Parse error:', parseError);
-        console.error('❌ Response body was:', execution.responseBody);
         throw new Error(`Failed to parse response: ${execution.responseBody.substring(0, 100)}...`);
       }
 
@@ -186,20 +169,14 @@ export default function ChallengePlayer() {
           mode: result.data.mode,
         };
         
-        console.log('✅ Challenge loaded successfully:', challengeData);
         setCurrentChallenge(challengeData);
         setAllQuestions(result.data.questions || []);
         setCurrentQuestionIndex(0);
         setQuestionStartTime(Date.now());
       } else {
-        console.error('❌ Function returned error:', result.error);
         throw new Error(result.error || 'Failed to load challenge');
       }
     } catch (error: any) {
-      console.error('❌ Error loading challenge:', error);
-      console.error('❌ Error message:', error.message);
-      console.error('❌ Error stack:', error.stack);
-      
       let errorMessage = 'Failed to load challenge. Please try again.';
       if (error.message) {
         errorMessage += `\n\nDetails: ${error.message}`;
@@ -239,7 +216,6 @@ export default function ChallengePlayer() {
         throw new Error(result.error || 'Failed to get hint');
       }
     } catch (error) {
-      console.error('Error getting hint:', error);
       Alert.alert('Error', 'Failed to get AI hint. Please try again.');
     } finally {
       setLoadingHint(false);
@@ -258,11 +234,6 @@ export default function ChallengePlayer() {
 
     setLoading(true);
     try {
-      console.log('🔵 Submitting question', currentQuestionIndex + 1, 'of', allQuestions.length);
-      console.log('🔵 Question:', currentQuestion);
-      console.log('🔵 Response length:', responseText.length);
-      console.log('🔵 Thinking time:', questionThinkingTime);
-      
       const execution = await functions.createExecution(
         'submit-challenge',
         JSON.stringify({
@@ -275,8 +246,6 @@ export default function ChallengePlayer() {
         })
       );
 
-      console.log('🔵 Submit execution response:', execution);
-
       if (execution.status === 'failed') {
         throw new Error('Function execution failed. Check Appwrite console for logs.');
       }
@@ -286,7 +255,6 @@ export default function ChallengePlayer() {
       }
 
       const result = JSON.parse(execution.responseBody);
-      console.log('🔵 Parsed submit result:', result);
 
       if (result.success) {
         const { data } = result;
@@ -335,9 +303,6 @@ export default function ChallengePlayer() {
         throw new Error(result.error || 'Failed to submit response');
       }
     } catch (error: any) {
-      console.error('❌ Error submitting question:', error);
-      console.error('❌ Error message:', error.message);
-      
       let errorMessage = 'Failed to submit your answer. Please try again.';
       if (error.message) {
         errorMessage += `\n\nDetails: ${error.message}`;
