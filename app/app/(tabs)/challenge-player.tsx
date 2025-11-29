@@ -520,7 +520,7 @@ const styles = StyleSheet.create({
   contentContainer: {
     paddingHorizontal: 20,
     paddingVertical: 24,
-    paddingBottom: 40,
+    paddingBottom: 48,
   },
   section: {
     marginBottom: 24,

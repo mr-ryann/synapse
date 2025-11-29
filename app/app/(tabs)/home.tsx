@@ -11,8 +11,8 @@ import { ChallengeCard } from '../../components/cards/ChallengeCard';
 import { InfiniteMarquee } from '../../components/ui/InfiniteMarquee';
 import { COLORS, FONTS } from '../../theme';
 
-// Fallback topics for marquee - can be fetched from backend later
-const DISCOVERY_TOPICS = [
+// Fallback topics for marquee
+const FALLBACK_TOPICS = [
   'Systems Thinking',
   'Game Theory', 
   'Stoicism',
@@ -33,16 +33,37 @@ export default function HomeScreen() {
   const [inProgressChallenge, setInProgressChallenge] = useState<any>(null);
   const [dailyProvocation, setDailyProvocation] = useState<any>(null);
   const [isCompleted, setIsCompleted] = useState(false);
+  const [topics, setTopics] = useState<string[]>(FALLBACK_TOPICS);
 
   useEffect(() => {
     if (user) {
       fetchHomeData();
+      fetchTopics();
     }
   }, [user]);
+
+  const fetchTopics = async () => {
+    try {
+      const topicsRes = await databases.listDocuments(
+        'synapse',
+        'topics',
+        [Query.limit(80)]
+      );
+      
+      if (topicsRes.documents.length > 0) {
+        const topicNames = topicsRes.documents.map((doc: any) => doc.name);
+        setTopics(topicNames);
+        console.log('Fetched topics:', topicNames);
+      }
+    } catch (err) {
+      console.log('Error fetching topics, using fallback:', err);
+    }
+  };
 
   const fetchHomeData = async () => {
     try {
       setLoading(true);
+      console.log('Fetching home data for user:', user?.$id);
 
       // Check for in-progress challenge
       try {
@@ -61,18 +82,22 @@ export default function HomeScreen() {
           setInProgressChallenge(challengeDoc);
         }
       } catch (err) {
-        // No in-progress challenge
+        console.log('No in-progress challenge or error:', err);
       }
 
       // Fetch recommended challenge from function
       try {
+        console.log('Calling getChallengeForUser function...');
         const execution = await functions.createExecution(
           'getChallengeForUser',
           JSON.stringify({ userId: user?.$id, mode: 'recommended' })
         );
         
+        console.log('Function response:', execution.responseBody);
+        
         if (!execution.responseBody || execution.responseBody.trim() === '') {
-          return;
+          console.log('Empty response from function, trying direct database fetch...');
+          throw new Error('Empty response');
         }
         
         const result = JSON.parse(execution.responseBody);
@@ -80,37 +105,79 @@ export default function HomeScreen() {
         if (result.success) {
           const challengeData = {
             $id: result.data.id,
+            title: result.data.title,
             promptText: result.data.promptText,
             topicName: result.data.topic,
             topicID: result.data.topicID,
+            xpReward: result.data.xpReward || 15,
             estimatedTime: result.data.estimatedTime,
             difficulty: result.data.difficulty,
           };
+          console.log('Challenge data:', challengeData);
           setDailyProvocation(challengeData);
           
           // Check if user has already completed this challenge
           try {
-            const historyCheck = await databases.listDocuments(
+            const responseDoc = await databases.getDocument(
               'synapse',
-              'user_challenge_history',
-              [
-                Query.equal('userId', user?.$id || ''),
-                Query.equal('challengeId', result.data.id),
-                Query.limit(1)
-              ]
+              'responses',
+              `${user?.$id}_${result.data.id}`
             );
-            setIsCompleted(historyCheck.documents.length > 0);
+            setIsCompleted(true);
+            console.log('Challenge already completed');
           } catch {
             // Not completed
             setIsCompleted(false);
           }
+        } else {
+          console.log('Function returned error:', result.error);
+          throw new Error(result.error);
         }
       } catch (err) {
-        // Error fetching recommended challenge
+        console.log('Function failed, fetching directly from database:', err);
+        // Fallback: fetch a random challenge directly from database
+        try {
+          const challengesRes = await databases.listDocuments(
+            'synapse',
+            'challenges',
+            [Query.limit(10)]
+          );
+          
+          if (challengesRes.documents.length > 0) {
+            const randomIndex = Math.floor(Math.random() * challengesRes.documents.length);
+            const challenge = challengesRes.documents[randomIndex];
+            console.log('Fetched challenge from DB:', challenge);
+            
+            const challengeData = {
+              $id: challenge.$id,
+              title: challenge.title,
+              promptText: challenge.promptText,
+              topicName: challenge.topicName,
+              topicID: challenge.topicID,
+              xpReward: challenge.xpReward || 15,
+              difficulty: challenge.difficulty || 1,
+            };
+            setDailyProvocation(challengeData);
+            
+            // Check completion
+            try {
+              await databases.getDocument(
+                'synapse',
+                'responses',
+                `${user?.$id}_${challenge.$id}`
+              );
+              setIsCompleted(true);
+            } catch {
+              setIsCompleted(false);
+            }
+          }
+        } catch (dbErr) {
+          console.log('Direct database fetch also failed:', dbErr);
+        }
       }
 
     } catch (error) {
-      // Error fetching home data
+      console.log('Error fetching home data:', error);
     } finally {
       setLoading(false);
     }
@@ -152,7 +219,7 @@ export default function HomeScreen() {
             <ChallengeCard
               challenge={inProgressChallenge}
               onPress={() => navigateToChallenge(inProgressChallenge.$id)}
-              buttonText="Continue Thinking"
+              buttonText="Continue"
               isFeatured={true}
             />
           ) : (
@@ -160,7 +227,7 @@ export default function HomeScreen() {
               <ChallengeCard
                 challenge={dailyProvocation}
                 onPress={() => navigateToChallenge(dailyProvocation.$id)}
-                buttonText={isCompleted ? "Rethink This" : "Start Thinking"}
+                buttonText={isCompleted ? "Retry" : "Start"}
                 isFeatured={true}
                 isCompleted={isCompleted}
               />
@@ -198,17 +265,17 @@ export default function HomeScreen() {
             <View style={styles.marqueeRows}>
               {/* Row 1 - Normal speed, left */}
               <InfiniteMarquee
-                items={DISCOVERY_TOPICS.slice(0, 5)}
-                speed={35000}
+                items={topics.slice(0, Math.ceil(topics.length / 2))}
+                speed={10000}
                 reverse={false}
-                fontSize={13}
+                fontSize={12}
               />
               {/* Row 2 - Slower, right (reverse) */}
               <InfiniteMarquee
-                items={DISCOVERY_TOPICS.slice(5)}
-                speed={40000}
+                items={topics.slice(Math.ceil(topics.length / 2))}
+                speed={15000}
                 reverse={true}
-                fontSize={13}
+                fontSize={12}
               />
             </View>
           </View>
@@ -239,19 +306,19 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   heroSection: {
-    flex: 0.65,
+    flex: 0.55,
     paddingHorizontal: 16,
     paddingVertical: 8,
     paddingTop: 24,
+    paddingBottom: 0,
   },
   cardContainer: {
     flex: 1,
     justifyContent: 'center',
   },
   discoverySection: {
-    flex: 0.35,
-    paddingTop: 16,
-    // justifyContent: 'center',
+    flex: 0.45,
+    paddingTop: 0,
   },
   statsContainer: {
     flexDirection: 'row',
@@ -291,22 +358,16 @@ const styles = StyleSheet.create({
   },
   discoverPill: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(240, 238, 231, 0.08)',
-    borderRadius: 16,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
     marginLeft: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(240, 238, 231, 0.15)',
+    marginBottom: 12,
   },
   discoverLabel: {
     fontFamily: FONTS.heading,
-    fontSize: 11,
+    fontSize: 14,
     fontWeight: '600',
     color: '#F0EEE7',
     letterSpacing: 3,
-    opacity: 0.8,
+    opacity: 0.7,
   },
   marqueeRows: {
     gap: 12,

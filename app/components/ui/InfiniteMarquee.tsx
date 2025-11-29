@@ -1,6 +1,7 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Easing, ViewStyle } from 'react-native';
-import { FONTS, COLORS } from '../../theme';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
+import { View, Text, StyleSheet, Animated, Easing, ViewStyle, TouchableOpacity, LayoutChangeEvent, PanResponder } from 'react-native';
+import { useRouter } from 'expo-router';
+import { FONTS } from '../../theme';
 
 interface InfiniteMarqueeProps {
   items: string[];
@@ -8,60 +9,244 @@ interface InfiniteMarqueeProps {
   reverse?: boolean;
   fontSize?: number;
   style?: ViewStyle;
+  onItemPress?: (item: string) => void;
 }
 
 export const InfiniteMarquee = React.memo<InfiniteMarqueeProps>(({
   items,
-  speed = 25000,
+  speed = 30000,
   reverse = false,
   fontSize = 16,
   style,
+  onItemPress,
 }) => {
-  const translateX = useRef(new Animated.Value(0)).current;
+  const router = useRouter();
+  const animatedValue = useRef(new Animated.Value(0)).current;
+  const [singleSetWidth, setSingleSetWidth] = useState(0);
+  const currentPosition = useRef(0);
+  const animationRef = useRef<Animated.CompositeAnimation | null>(null);
+  const isDragging = useRef(false);
+  const dragStartPosition = useRef(0);
 
-  // Duplicate items for seamless loop
-  const duplicatedItems = [...items, ...items, ...items];
+  // Duplicate items twice for seamless infinite loop
+  const duplicatedItems = [...items, ...items];
 
-  // Estimate width of one set (for animation loop point)
-  const estimatedItemWidth = fontSize * 8; // Approximate width per pill
-  const oneSetWidth = items.length * estimatedItemWidth;
+  // Handle pill press - navigate to library with topic expanded
+  const handlePillPress = useCallback((topicName: string) => {
+    if (onItemPress) {
+      onItemPress(topicName);
+    } else {
+      router.push(`/(tabs)/library?expandTopic=${encodeURIComponent(topicName)}`);
+    }
+  }, [onItemPress, router]);
 
+  // Stop any running animation
+  const stopAnimation = useCallback(() => {
+    if (animationRef.current) {
+      animationRef.current.stop();
+      animationRef.current = null;
+    }
+  }, []);
+
+  // Start continuous infinite scroll animation
+  const startInfiniteScroll = useCallback(() => {
+    if (singleSetWidth <= 0 || isDragging.current) return;
+
+    const startPos = currentPosition.current;
+    
+    // For normal direction: scroll from 0 to -singleSetWidth
+    // For reverse direction: scroll from -singleSetWidth to 0
+    const targetPos = reverse ? 0 : -singleSetWidth;
+    
+    // Calculate remaining distance for proportional timing
+    const totalDistance = singleSetWidth;
+    const remainingDistance = Math.abs(targetPos - startPos);
+    const duration = (remainingDistance / totalDistance) * speed;
+
+    if (duration < 50) {
+      // Already at target, reset and restart
+      const resetPos = reverse ? -singleSetWidth : 0;
+      currentPosition.current = resetPos;
+      animatedValue.setValue(resetPos);
+      // Use requestAnimationFrame for smoother restart
+      requestAnimationFrame(() => {
+        if (!isDragging.current) {
+          startInfiniteScroll();
+        }
+      });
+      return;
+    }
+
+    animationRef.current = Animated.timing(animatedValue, {
+      toValue: targetPos,
+      duration: duration,
+      easing: Easing.linear,
+      useNativeDriver: true,
+    });
+
+    animationRef.current.start(({ finished }) => {
+      if (finished && !isDragging.current) {
+        // Seamlessly reset to the beginning
+        const resetPos = reverse ? -singleSetWidth : 0;
+        currentPosition.current = resetPos;
+        animatedValue.setValue(resetPos);
+        // Immediately continue - no delay for seamless loop
+        requestAnimationFrame(() => {
+          if (!isDragging.current) {
+            startInfiniteScroll();
+          }
+        });
+      }
+    });
+  }, [singleSetWidth, speed, reverse, animatedValue]);
+
+  // Track animated value position
   useEffect(() => {
-    // Start position
-    const startValue = reverse ? -oneSetWidth : 0;
-    // End position - move exactly one set width for seamless loop
-    const endValue = reverse ? 0 : -oneSetWidth;
-    
-    translateX.setValue(startValue);
+    const listenerId = animatedValue.addListener(({ value }) => {
+      currentPosition.current = value;
+    });
+    return () => {
+      animatedValue.removeListener(listenerId);
+    };
+  }, [animatedValue]);
 
-    const animation = Animated.loop(
-      Animated.timing(translateX, {
-        toValue: endValue,
-        duration: speed,
-        easing: Easing.linear,
-        useNativeDriver: true,
-      }),
-      { resetBeforeIteration: true }
-    );
-    
-    animation.start();
-    
-    return () => animation.stop();
-  }, [reverse, speed, oneSetWidth, translateX]);
+  // Start animation when width is measured
+  useEffect(() => {
+    if (singleSetWidth > 0 && !isDragging.current) {
+      // Set initial position
+      const initialPos = reverse ? -singleSetWidth : 0;
+      currentPosition.current = initialPos;
+      animatedValue.setValue(initialPos);
+      
+      // Start scrolling
+      const timer = setTimeout(() => {
+        startInfiniteScroll();
+      }, 100);
+      
+      return () => {
+        clearTimeout(timer);
+        stopAnimation();
+      };
+    }
+  }, [singleSetWidth, reverse, startInfiniteScroll, stopAnimation, animatedValue]);
+
+  // Pan responder for manual dragging
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (_, gestureState) => {
+        return Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 8;
+      },
+      onPanResponderGrant: () => {
+        isDragging.current = true;
+        stopAnimation();
+        dragStartPosition.current = currentPosition.current;
+      },
+      onPanResponderMove: (_, gestureState) => {
+        let newPosition = dragStartPosition.current + gestureState.dx;
+        
+        // Wrap position for infinite feel
+        if (singleSetWidth > 0) {
+          while (newPosition > 0) {
+            newPosition -= singleSetWidth;
+            dragStartPosition.current -= singleSetWidth;
+          }
+          while (newPosition < -singleSetWidth) {
+            newPosition += singleSetWidth;
+            dragStartPosition.current += singleSetWidth;
+          }
+        }
+        
+        currentPosition.current = newPosition;
+        animatedValue.setValue(newPosition);
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        isDragging.current = false;
+        
+        // Apply momentum
+        const velocity = gestureState.vx;
+        const momentumDistance = velocity * 150;
+        let targetPosition = currentPosition.current + momentumDistance;
+        
+        // Normalize position
+        if (singleSetWidth > 0) {
+          while (targetPosition > 0) {
+            targetPosition -= singleSetWidth;
+          }
+          while (targetPosition < -singleSetWidth) {
+            targetPosition += singleSetWidth;
+          }
+        }
+        
+        Animated.timing(animatedValue, {
+          toValue: targetPosition,
+          duration: 250,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }).start(({ finished }) => {
+          if (finished) {
+            currentPosition.current = targetPosition;
+            setTimeout(() => {
+              if (!isDragging.current) {
+                startInfiniteScroll();
+              }
+            }, 800);
+          }
+        });
+      },
+      onPanResponderTerminate: () => {
+        isDragging.current = false;
+        setTimeout(() => {
+          if (!isDragging.current) {
+            startInfiniteScroll();
+          }
+        }, 300);
+      },
+    })
+  ).current;
+
+  // Measure single set width
+  const onContentLayout = useCallback((event: LayoutChangeEvent) => {
+    const { width } = event.nativeEvent.layout;
+    // Total width divided by 2 (we have 2 copies)
+    const measuredWidth = width / 2;
+    if (measuredWidth > 0 && measuredWidth !== singleSetWidth) {
+      setSingleSetWidth(measuredWidth);
+    }
+  }, [singleSetWidth]);
+
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      stopAnimation();
+    };
+  }, [stopAnimation]);
 
   return (
     // @ts-expect-error - React 19 type compatibility issue with RN
-    <View style={[styles.container, style]}>
-      {/* @ts-expect-error - React 19 type compatibility issue */}
-      <Animated.View style={[styles.marqueeContainer, { transform: [{ translateX }] }]}>
+    <View style={[styles.container, style]} {...panResponder.panHandlers}>
+      <Animated.View
+        style={[
+          styles.scrollContent,
+          {
+            transform: [{ translateX: animatedValue }],
+          },
+        ]}
+        onLayout={onContentLayout}
+      >
         {duplicatedItems.map((item, index) => (
           // @ts-expect-error - React 19 type compatibility issue
-          <View key={`${item}-${index}`} style={styles.pill}>
+          <TouchableOpacity
+            key={`${item}-${index}`}
+            style={styles.pill}
+            onPress={() => handlePillPress(item)}
+            activeOpacity={0.7}
+          >
             {/* @ts-expect-error - React 19 type compatibility issue */}
             <Text style={[styles.pillText, { fontSize }]}>
               {item.toUpperCase()}
             </Text>
-          </View>
+          </TouchableOpacity>
         ))}
       </Animated.View>
     </View>
@@ -70,11 +255,10 @@ export const InfiniteMarquee = React.memo<InfiniteMarqueeProps>(({
 
 const styles = StyleSheet.create({
   container: {
-    overflow: 'hidden',
     width: '100%',
-    justifyContent: 'center',
+    overflow: 'hidden',
   },
-  marqueeContainer: {
+  scrollContent: {
     flexDirection: 'row',
     alignItems: 'center',
   },

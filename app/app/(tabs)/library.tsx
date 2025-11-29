@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity } from 'react-native';
-import { useRouter } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
+
+// Enable LayoutAnimation for Android
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ChevronDown, ChevronRight } from 'lucide-react-native';
 import { useUserStore } from '../../stores/useUserStore';
 import { databases } from '../../lib/appwrite';
@@ -27,6 +32,7 @@ interface TopicGroup {
 export default function LibraryScreen() {
   const { user } = useUserStore();
   const router = useRouter();
+  const { expandTopic } = useLocalSearchParams<{ expandTopic?: string }>();
   const [topicGroups, setTopicGroups] = useState<TopicGroup[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,6 +41,17 @@ export default function LibraryScreen() {
       fetchAllChallenges();
     }
   }, [user]);
+
+  // Handle expandTopic parameter - expand the specified topic
+  useEffect(() => {
+    if (expandTopic && topicGroups.length > 0) {
+      const decodedTopic = decodeURIComponent(expandTopic);
+      setTopicGroups(prev => prev.map(group => ({
+        ...group,
+        isExpanded: group.topicName.toLowerCase() === decodedTopic.toLowerCase(),
+      })));
+    }
+  }, [expandTopic, topicGroups.length]);
 
   const fetchAllChallenges = async () => {
     if (!user) return;
@@ -111,10 +128,27 @@ export default function LibraryScreen() {
   };
 
   const toggleTopic = (topicName: string) => {
+    // Animate the layout change smoothly
+    LayoutAnimation.configureNext({
+      duration: 250,
+      update: {
+        type: LayoutAnimation.Types.easeInEaseOut,
+        property: LayoutAnimation.Properties.opacity,
+      },
+      delete: {
+        type: LayoutAnimation.Types.easeInEaseOut,
+        property: LayoutAnimation.Properties.opacity,
+      },
+      create: {
+        type: LayoutAnimation.Types.easeInEaseOut,
+        property: LayoutAnimation.Properties.opacity,
+      },
+    });
+    
     setTopicGroups(prev => prev.map(group => 
       group.topicName === topicName 
         ? { ...group, isExpanded: !group.isExpanded }
-        : group
+        : { ...group, isExpanded: false } // Close all other dropdowns
     ));
   };
 

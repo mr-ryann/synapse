@@ -137,6 +137,7 @@ def main(context):
                     "promptText": challenge.get("promptText", ""),
                     "topic": challenge.get("topicName", ""),
                     "topicID": challenge.get("topicID", ""),
+                    "xpReward": challenge.get("xpReward", 15),
                     "estimatedTime": challenge.get("estimatedTime", 8),
                     "difficulty": challenge.get("difficulty", 1),
                     "archetype": challenge.get("archetype", ""),

@@ -1,6 +1,6 @@
 import React from 'react';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
-import { Sparkles } from 'lucide-react-native';
+import { Sparkles, Zap } from 'lucide-react-native';
 import { COLORS, FONTS } from '../../theme';
 
 interface ChallengeCardProps {
@@ -22,14 +22,14 @@ interface ChallengeCardProps {
 export const ChallengeCard = React.memo<ChallengeCardProps>(({
   challenge,
   onPress,
-  buttonText = 'Start Challenge',
+  buttonText = 'Start',
   isFeatured = false,
   fullScreen = false,
   isCompleted = false,
 }) => {
-  // Support both coreProvocation and promptText for compatibility
-  const provocationText = challenge.coreProvocation || challenge.promptText || '';
   const titleText = challenge.title || 'Daily Challenge';
+  const topicText = challenge.topicName || 'General';
+  const xpReward = challenge.xpReward || 15;
 
   return (
     <View
@@ -40,31 +40,40 @@ export const ChallengeCard = React.memo<ChallengeCardProps>(({
         isCompleted && styles.completedContainer,
       ]}
     >
-      {isFeatured && (
-        <View style={styles.featuredBadge}>
-          <Sparkles size={16} color={isCompleted ? COLORS.accent.secondary : COLORS.accent.primary} />
-          <Text style={[styles.featuredText, isCompleted && styles.completedText]}>
-            {isCompleted ? 'Completed ✓' : "Today's Cognitive Nudge"}
-          </Text>
-        </View>
-      )}
-      
-      <Text style={[styles.title, fullScreen && styles.fullScreenTitle]}>{titleText}</Text>
-      <Text style={[styles.provocation, fullScreen && styles.fullScreenProvocation]} numberOfLines={fullScreen ? undefined : 3}>
-        {provocationText}
-      </Text>
-
-      <View style={styles.footer}>
-        {challenge.topicName && (
-          <Text style={styles.topic}>{challenge.topicName}</Text>
-        )}
-        {challenge.xpReward && (
-          <Text style={styles.xp}>+{challenge.xpReward} XP</Text>
-        )}
+      {/* Header - Today's Challenge */}
+      <View style={styles.header}>
+        <Sparkles size={18} color={isCompleted ? COLORS.accent.secondary : COLORS.accent.primary} />
+        <Text style={[styles.headerText, isCompleted && styles.completedHeaderText]}>
+          {isCompleted ? 'Completed' : "Today's Challenge"}
+        </Text>
       </View>
 
-      <TouchableOpacity style={styles.button} onPress={onPress} activeOpacity={0.8}>
-        <Text style={styles.buttonText}>{buttonText}</Text>
+      {/* Challenge Title */}
+      <Text style={[styles.title, fullScreen && styles.fullScreenTitle]}>
+        {titleText}
+      </Text>
+
+      {/* Topic */}
+      <View style={styles.topicContainer}>
+        <Text style={styles.topicLabel}>Topic:</Text>
+        <Text style={styles.topicValue}>{topicText}</Text>
+      </View>
+
+      {/* XP Reward */}
+      <View style={styles.xpContainer}>
+        <Zap size={18} color={COLORS.accent.secondary} fill={COLORS.accent.secondary} />
+        <Text style={styles.xpText}>+{xpReward} XP</Text>
+      </View>
+
+      {/* Start Button */}
+      <TouchableOpacity 
+        style={[styles.button, isCompleted && styles.completedButton]} 
+        onPress={onPress} 
+        activeOpacity={0.8}
+      >
+        <Text style={[styles.buttonText, isCompleted && styles.completedButtonText]}>
+          {buttonText}
+        </Text>
       </TouchableOpacity>
     </View>
   );
@@ -75,16 +84,15 @@ ChallengeCard.displayName = 'ChallengeCard';
 const styles = StyleSheet.create({
   container: {
     backgroundColor: COLORS.background.elevated,
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 16,
+    borderRadius: 20,
+    padding: 24,
     borderWidth: 1,
     borderColor: COLORS.border.default,
-    shadowColor: COLORS.overlay.glow,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
+    elevation: 8,
   },
   featuredContainer: {
     borderColor: COLORS.accent.primary,
@@ -94,77 +102,85 @@ const styles = StyleSheet.create({
   completedContainer: {
     borderColor: COLORS.accent.secondary,
   },
-  completedText: {
-    color: COLORS.accent.secondary,
-  },
   fullScreenContainer: {
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: 'center',
   },
   fullScreenTitle: {
-    fontSize: 26,
-    marginBottom: 16,
+    fontSize: 28,
   },
-  fullScreenProvocation: {
-    fontSize: 18,
-    lineHeight: 28,
-    flex: 1,
-  },
-  featuredBadge: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 20,
   },
-  featuredText: {
+  headerText: {
     fontFamily: FONTS.body,
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 14,
+    fontWeight: '700',
     color: COLORS.accent.primary,
-    marginLeft: 6,
+    marginLeft: 8,
     textTransform: 'uppercase',
-    letterSpacing: 1,
+    letterSpacing: 1.5,
+  },
+  completedHeaderText: {
+    color: COLORS.accent.secondary,
   },
   title: {
     fontFamily: FONTS.heading,
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: COLORS.text.primary,
+    marginBottom: 16,
+    lineHeight: 32,
+  },
+  topicContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  provocation: {
-    fontFamily: FONTS.body,
-    fontSize: 16,
-    lineHeight: 24,
-    color: COLORS.text.secondary,
-    marginBottom: 16,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  topic: {
+  topicLabel: {
     fontFamily: FONTS.body,
     fontSize: 14,
     color: COLORS.text.muted,
+    marginRight: 6,
   },
-  xp: {
+  topicValue: {
     fontFamily: FONTS.body,
     fontSize: 14,
     fontWeight: '600',
+    color: COLORS.text.secondary,
+  },
+  xpContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  xpText: {
+    fontFamily: FONTS.body,
+    fontSize: 18,
+    fontWeight: '700',
     color: COLORS.accent.secondary,
+    marginLeft: 6,
   },
   button: {
     backgroundColor: COLORS.accent.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderRadius: 14,
+    paddingVertical: 16,
     alignItems: 'center',
+  },
+  completedButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: COLORS.accent.secondary,
   },
   buttonText: {
     fontFamily: FONTS.body,
-    fontSize: 16,
-    fontWeight: '600',
+    fontSize: 18,
+    fontWeight: '700',
     color: COLORS.background.primary,
+  },
+  completedButtonText: {
+    color: COLORS.accent.secondary,
   },
 });
