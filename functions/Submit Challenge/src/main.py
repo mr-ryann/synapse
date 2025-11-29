@@ -1,6 +1,6 @@
 import os
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from appwrite.client import Client
 from appwrite.services.databases import Databases
 from appwrite.query import Query
@@ -9,14 +9,53 @@ from appwrite.exception import AppwriteException
 # Gamification Configuration
 XP_PER_QUESTION = 5
 XP_COMPLETION_BONUS = 10
-XP_TIME_BONUS_THRESHOLD = 120
-XP_TIME_BONUS = 2
-XP_LENGTH_BONUS_THRESHOLD = 200
-XP_LENGTH_BONUS = 2
+XP_TIME_BONUS_THRESHOLD = 120  # seconds - bonus if total thinking time >= this
+XP_TIME_BONUS = 5
+XP_LENGTH_BONUS_THRESHOLD = 200  # chars per response on average
+XP_LENGTH_BONUS = 3
 XP_PER_LEVEL = 100
 
+
 def main(context):
+    """
+    Submit a complete challenge response.
+    
+    Document ID format: {userID}_{challengeID}
+    This allows us to:
+    - Use $id as both unique identifier AND challenge reference
+    - Automatically enforce one response per user per challenge
+    - Easily check if user completed a challenge by trying to get the document
+    
+    Expected payload:
+    {
+        "userId": "user-id",
+        "challengeId": "challenge-id",
+        "responses": [
+            {
+                "questionIndex": 0,
+                "questionText": "Question 1?",
+                "responseText": "My answer to question 1",
+                "thinkingTime": 45
+            },
+            ...
+        ],
+        "totalThinkingTime": 180
+    }
+    
+    Response document schema:
+    {
+        "$id": "{userID}_{challengeID}",
+        "userID": "user-id",
+        "responses": ["response1", "response2", ...],
+        "questions": ["question1", "question2", ...],
+        "thinkingTimes": [45, 60, ...],
+        "totalThinkingTime": 180,
+        "totalXpEarned": 25,
+        "completedAt": "2025-11-29T12:00:00Z"
+    }
+    """
     try:
+        # Validate environment variables
         required_env = [
             "APPWRITE_FUNCTION_API_ENDPOINT",
             "APPWRITE_FUNCTION_PROJECT_ID",
@@ -31,6 +70,7 @@ def main(context):
                 "error": f"Server configuration error: Missing {', '.join(missing)}"
             }, 500)
 
+        # Initialize Appwrite client
         client = Client()
         client.set_endpoint(os.environ["APPWRITE_FUNCTION_API_ENDPOINT"])
         client.set_project(os.environ["APPWRITE_FUNCTION_PROJECT_ID"])
@@ -39,6 +79,7 @@ def main(context):
         databases = Databases(client)
         database_id = os.environ["APPWRITE_DATABASE_ID"]
 
+        # Parse request body
         try:
             data = json.loads(context.req.body) if context.req.body else {}
         except json.JSONDecodeError:
@@ -47,112 +88,138 @@ def main(context):
                 "error": "Invalid JSON in request body"
             }, 400)
 
+        # Extract and validate fields
         user_id = data.get("userId")
         challenge_id = data.get("challengeId")
-        question_index = data.get("questionIndex")
-        question_text = data.get("questionText")
-        response_text = data.get("responseText")
-        thinking_time = data.get("thinkingTime", 0)
+        responses = data.get("responses", [])
+        total_thinking_time = data.get("totalThinkingTime", 0)
 
-        if not all([user_id, challenge_id, question_text, response_text]) or question_index is None:
+        if not user_id or not challenge_id:
             return context.res.json({
                 "success": False,
-                "error": "Missing required fields: userId, challengeId, questionIndex, questionText, responseText"
+                "error": "Missing required fields: userId, challengeId"
             }, 400)
 
-        context.log(f"Processing question {question_index} - User: {user_id}, Challenge: {challenge_id}")
+        if not responses or len(responses) == 0:
+            return context.res.json({
+                "success": False,
+                "error": "No responses provided"
+            }, 400)
 
-        challenge = databases.get_document(
-            database_id=database_id,
-            collection_id="challenges",
-            document_id=challenge_id
-        )
-        
+        context.log(f"Processing challenge submission - User: {user_id}, Challenge: {challenge_id}, Responses: {len(responses)}")
+
+        # Get challenge to validate
+        try:
+            challenge = databases.get_document(
+                database_id=database_id,
+                collection_id="challenges",
+                document_id=challenge_id
+            )
+        except AppwriteException as e:
+            context.error(f"Challenge not found: {str(e)}")
+            return context.res.json({
+                "success": False,
+                "error": "Challenge not found"
+            }, 404)
+
         total_questions = len(challenge.get("questions", []))
-        is_last_question = (question_index >= total_questions - 1)
-
-        question_xp = XP_PER_QUESTION
         
-        if thinking_time >= XP_TIME_BONUS_THRESHOLD:
-            question_xp += XP_TIME_BONUS
-            context.log(f"Time bonus: +{XP_TIME_BONUS} XP")
+        # Extract arrays from responses
+        response_texts = []
+        question_texts = []
+        thinking_times = []
         
-        if len(response_text) >= XP_LENGTH_BONUS_THRESHOLD:
-            question_xp += XP_LENGTH_BONUS
-            context.log(f"Length bonus: +{XP_LENGTH_BONUS} XP")
+        for resp in responses:
+            response_texts.append(resp.get("responseText", ""))
+            question_texts.append(resp.get("questionText", ""))
+            thinking_times.append(resp.get("thinkingTime", 0))
 
-        context.log(f"XP for this question: {question_xp}")
+        # Calculate XP
+        base_xp = XP_PER_QUESTION * len(responses)
+        context.log(f"Base XP: {base_xp} ({XP_PER_QUESTION} x {len(responses)} questions)")
 
-        # Check if user already answered this question - update instead of create
-        existing_response = databases.list_documents(
-            database_id=database_id,
-            collection_id="responses",
-            queries=[
-                Query.equal("userID", [user_id]),
-                Query.equal("challengeID", [challenge_id]),
-                Query.equal("questionIndex", [question_index]),
-                Query.limit(1)
-            ]
-        )
+        # Completion bonus (if all questions answered)
+        completion_bonus = 0
+        if len(responses) >= total_questions:
+            completion_bonus = XP_COMPLETION_BONUS
+            context.log(f"Completion bonus: +{completion_bonus} XP")
 
-        if existing_response["total"] > 0:
-            # Update existing response
+        # Time bonus (if spent enough time thinking)
+        time_bonus = 0
+        if total_thinking_time >= XP_TIME_BONUS_THRESHOLD:
+            time_bonus = XP_TIME_BONUS
+            context.log(f"Time bonus: +{time_bonus} XP (spent {total_thinking_time}s)")
+
+        # Length bonus (if responses are detailed)
+        avg_response_length = sum(len(r) for r in response_texts) / len(response_texts) if response_texts else 0
+        length_bonus = 0
+        if avg_response_length >= XP_LENGTH_BONUS_THRESHOLD:
+            length_bonus = XP_LENGTH_BONUS
+            context.log(f"Length bonus: +{length_bonus} XP (avg {avg_response_length:.0f} chars)")
+
+        total_xp = base_xp + completion_bonus + time_bonus + length_bonus
+        context.log(f"Total XP earned: {total_xp}")
+
+        # Generate deterministic document ID: {userID}_{challengeID}
+        # This ensures one response per user per challenge
+        doc_id = f"{user_id}_{challenge_id}"
+        context.log(f"Document ID: {doc_id}")
+
+        # Check if this response already exists (retry)
+        is_retry = False
+        try:
+            existing_doc = databases.get_document(
+                database_id=database_id,
+                collection_id="responses",
+                document_id=doc_id
+            )
+            is_retry = True
+            context.log(f"Found existing response - this is a retry")
+        except AppwriteException as e:
+            if "not found" in str(e).lower() or "could not be found" in str(e).lower():
+                is_retry = False
+                context.log(f"No existing response - first attempt")
+            else:
+                raise e
+
+        # Prepare response document data (no challengeID - it's in the $id)
+        response_data = {
+            "userID": user_id,
+            "responses": response_texts,
+            "questions": question_texts,
+            "thinkingTimes": thinking_times,
+            "totalThinkingTime": total_thinking_time,
+            "totalXpEarned": total_xp,
+            "completedAt": datetime.now(timezone.utc).isoformat()
+        }
+
+        # Create or update response document
+        if is_retry:
+            # Update existing (retry)
             response_doc = databases.update_document(
                 database_id=database_id,
                 collection_id="responses",
-                document_id=existing_response["documents"][0]["$id"],
-                data={
-                    "questionText": question_text,
-                    "responseText": response_text,
-                    "thinkingTime": thinking_time,
-                    "xpEarned": question_xp,
-                    "submittedAt": datetime.utcnow().isoformat()
-                }
+                document_id=doc_id,
+                data=response_data
             )
-            context.log(f"Response updated with ID: {response_doc['$id']}")
+            context.log(f"Updated response document: {response_doc['$id']}")
         else:
-            # Create new response
+            # Create new
             response_doc = databases.create_document(
                 database_id=database_id,
                 collection_id="responses",
-                document_id="unique()",
-                data={
-                    "userID": user_id,
-                    "challengeID": challenge_id,
-                    "questionIndex": question_index,
-                    "questionText": question_text,
-                    "responseText": response_text,
-                    "thinkingTime": thinking_time,
-                    "xpEarned": question_xp,
-                    "submittedAt": datetime.utcnow().isoformat()
-                },
+                document_id=doc_id,
+                data=response_data,
                 permissions=[
                     f'read("user:{user_id}")',
                     f'update("user:{user_id}")',
                     f'delete("user:{user_id}")'
                 ]
             )
-            context.log(f"Response saved with ID: {response_doc['$id']}")
+            context.log(f"Created response document: {response_doc['$id']}")
 
-        all_responses = databases.list_documents(
-            database_id=database_id,
-            collection_id="responses",
-            queries=[
-                Query.equal("userID", [user_id]),
-                Query.equal("challengeID", [challenge_id])
-            ]
-        )
-        
-        questions_answered = all_responses["total"]
-        total_xp_earned = sum(r.get("xpEarned", 0) for r in all_responses["documents"])
-        total_thinking_time = sum(r.get("thinkingTime", 0) for r in all_responses["documents"])
-
-        if is_last_question:
-            completion_bonus = XP_COMPLETION_BONUS if questions_answered == total_questions else 0
-            total_xp_earned += completion_bonus
-            
-            context.log(f"Challenge complete! Total XP: {total_xp_earned} (including {completion_bonus} completion bonus)")
-
+        # Update user stats (only add XP if not a retry, or add difference)
+        try:
             user = databases.get_document(
                 database_id=database_id,
                 collection_id="users",
@@ -160,15 +227,24 @@ def main(context):
             )
 
             current_xp = user.get("xp", 0)
-            new_xp = current_xp + total_xp_earned
             current_level = user.get("level", 1)
+            current_streak = user.get("streak", 0)
+            completed_challenges = user.get("completedChallenges", 0)
+
+            if is_retry:
+                # On retry, we might want to only add XP difference or skip XP update
+                # For now, let's not add XP on retry
+                new_xp = current_xp
+                new_streak = current_streak
+                new_completed = completed_challenges
+                context.log("Retry detected - not adding XP")
+            else:
+                new_xp = current_xp + total_xp
+                new_streak = current_streak + 1
+                new_completed = completed_challenges + 1
+
             new_level = (new_xp // XP_PER_LEVEL) + 1
             leveled_up = new_level > current_level
-
-            current_streak = user.get("streak", 0)
-            new_streak = current_streak + 1
-
-            completed_challenges = user.get("completedChallenges", 0) + 1
 
             databases.update_document(
                 database_id=database_id,
@@ -178,87 +254,35 @@ def main(context):
                     "xp": new_xp,
                     "level": new_level,
                     "streak": new_streak,
-                    "completedChallenges": completed_challenges,
-                    "lastActiveDate": datetime.utcnow().isoformat()
+                    "completedChallenges": new_completed,
+                    "lastActiveDate": datetime.now(timezone.utc).isoformat()
                 }
             )
 
             context.log(f"User updated - XP: {new_xp}, Level: {new_level}, Streak: {new_streak}")
 
-            try:
-                history_list = databases.list_documents(
-                    database_id=database_id,
-                    collection_id="user_challenge_history",
-                    queries=[
-                        Query.equal("userId", [user_id]),
-                        Query.equal("challengeId", [challenge_id]),
-                        Query.limit(1)
-                    ]
-                )
-                
-                if history_list["total"] > 0:
-                    history_doc = history_list["documents"][0]
-                    databases.update_document(
-                        database_id=database_id,
-                        collection_id="user_challenge_history",
-                        document_id=history_doc["$id"],
-                        data={
-                            "xpEarned": total_xp_earned,
-                            "completionTime": total_thinking_time
-                        }
-                    )
-                else:
-                    databases.create_document(
-                        database_id=database_id,
-                        collection_id="user_challenge_history",
-                        document_id="unique()",
-                        data={
-                            "userId": user_id,
-                            "questionId": challenge_id,
-                            "challengeId": challenge_id,
-                            "challengeType": "text",
-                            "timestamp": datetime.utcnow().isoformat(),
-                            "xpEarned": total_xp_earned,
-                            "completionTime": total_thinking_time
-                        },
-                        permissions=[
-                            f'read("user:{user_id}")',
-                            f'update("user:{user_id}")',
-                            f'delete("user:{user_id}")'
-                        ]
-                    )
-                    
-            except AppwriteException as e:
-                context.error(f"Failed to update challenge history: {str(e)}")
+        except AppwriteException as e:
+            context.error(f"Failed to update user stats: {str(e)}")
+            # Don't fail the whole request if user update fails
 
-            return context.res.json({
-                "success": True,
-                "data": {
-                    "responseId": response_doc["$id"],
-                    "questionIndex": question_index,
-                    "isLastQuestion": True,
-                    "questionsAnswered": questions_answered,
-                    "totalQuestions": total_questions,
-                    "xpEarnedThisQuestion": question_xp,
-                    "totalXpEarned": total_xp_earned,
-                    "completionBonus": completion_bonus,
-                    "level": new_level,
-                    "leveledUp": leveled_up,
-                    "streak": new_streak,
-                    "message": f"Challenge complete! You earned {total_xp_earned} XP! 🧠✨"
-                }
-            })
-        
         return context.res.json({
             "success": True,
             "data": {
                 "responseId": response_doc["$id"],
-                "questionIndex": question_index,
-                "isLastQuestion": False,
-                "questionsAnswered": questions_answered,
+                "isRetry": is_retry,
+                "questionsAnswered": len(responses),
                 "totalQuestions": total_questions,
-                "xpEarnedThisQuestion": question_xp,
-                "message": f"Question {question_index + 1} saved! {total_questions - questions_answered} more to go!"
+                "totalXpEarned": total_xp if not is_retry else 0,
+                "xpBreakdown": {
+                    "base": base_xp,
+                    "completion": completion_bonus,
+                    "time": time_bonus,
+                    "length": length_bonus
+                },
+                "level": new_level if 'new_level' in dir() else current_level,
+                "leveledUp": leveled_up if 'leveled_up' in dir() else False,
+                "streak": new_streak if 'new_streak' in dir() else current_streak,
+                "message": "Challenge completed! Great thinking! 🧠✨" if not is_retry else "Challenge responses updated!"
             }
         })
 

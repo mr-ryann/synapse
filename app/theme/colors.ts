@@ -11,7 +11,7 @@ export const COLORS = {
 
   // Text colors
   text: {
-    primary: '#FFFFFF',
+    primary: '#F0EEE7', // Off-white
     secondary: '#AAAAAA',
     muted: '#777777',
   },

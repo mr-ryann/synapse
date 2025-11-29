@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, Text, View, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useUserStore } from '../../stores/useUserStore';
 import { useRouter } from 'expo-router';
 import { databases, functions } from '../../lib/appwrite';
@@ -7,7 +8,22 @@ import { Query } from 'react-native-appwrite';
 
 // Import components
 import { ChallengeCard } from '../../components/cards/ChallengeCard';
+import { InfiniteMarquee } from '../../components/ui/InfiniteMarquee';
 import { COLORS, FONTS } from '../../theme';
+
+// Fallback topics for marquee - can be fetched from backend later
+const DISCOVERY_TOPICS = [
+  'Systems Thinking',
+  'Game Theory', 
+  'Stoicism',
+  'Logic',
+  'Ethics',
+  'Psychology',
+  'Mental Models',
+  'Fallacies',
+  'Philosophy',
+  'Bias Mitigation',
+];
 
 export default function HomeScreen() {
   const { user } = useUserStore();
@@ -106,52 +122,99 @@ export default function HomeScreen() {
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 12) return 'Good morning';
-    if (hour < 18) return 'Good afternoon';
-    return 'Good evening';
+    if (hour < 12) return 'Good Morning';
+    if (hour < 18) return 'Good Afternoon';
+    return 'Good Evening';
   };
 
   if (loading) {
     return (
-      <View style={styles.loadingContainer}>
+      <SafeAreaView style={styles.loadingContainer} edges={['top']}>
         <ActivityIndicator size="large" color={COLORS.accent.primary} />
-      </View>
+      </SafeAreaView>
     );
   }
 
-  return (
-    <View style={styles.container}>
-      {/* Greeting */}
-      <Text style={styles.greeting}>
-        {getGreeting()}, {user?.name || 'Explorer'}.
-      </Text>
+  const hasPendingChallenge = !!inProgressChallenge;
 
-      {/* Full-screen Challenge Card */}
-      <View style={styles.challengeFullScreen}>
-        {/* Priority: Show pending/in-progress challenge if exists */}
-        {inProgressChallenge ? (
-          <ChallengeCard
-            challenge={inProgressChallenge}
-            onPress={() => navigateToChallenge(inProgressChallenge.$id)}
-            buttonText="Continue Thinking"
-            isFeatured={true}
-            fullScreen={true}
-          />
-        ) : (
-          /* Otherwise show daily provocation */
-          dailyProvocation && (
+  return (
+    <SafeAreaView style={styles.container} edges={[]}>
+      {/* Hero Section - 65% */}
+      <View style={styles.heroSection}>
+        {/* Greeting */}
+        <Text style={styles.greeting}>
+          {getGreeting()}, {user?.name || 'Explorer'}.
+        </Text>
+
+        {/* Challenge Card - Centered */}
+        <View style={styles.cardContainer}>
+          {inProgressChallenge ? (
             <ChallengeCard
-              challenge={dailyProvocation}
-              onPress={() => navigateToChallenge(dailyProvocation.$id)}
-              buttonText={isCompleted ? "Rethink This" : "Start Thinking"}
+              challenge={inProgressChallenge}
+              onPress={() => navigateToChallenge(inProgressChallenge.$id)}
+              buttonText="Continue Thinking"
               isFeatured={true}
-              fullScreen={true}
-              isCompleted={isCompleted}
             />
-          )
+          ) : (
+            dailyProvocation && (
+              <ChallengeCard
+                challenge={dailyProvocation}
+                onPress={() => navigateToChallenge(dailyProvocation.$id)}
+                buttonText={isCompleted ? "Rethink This" : "Start Thinking"}
+                isFeatured={true}
+                isCompleted={isCompleted}
+              />
+            )
+          )}
+        </View>
+      </View>
+
+      {/* Discovery Section - 35% */}
+      <View style={styles.discoverySection}>
+        {hasPendingChallenge ? (
+          /* User Stats when there's a pending challenge */
+          <View style={styles.statsContainer}>
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{user?.xp || 0}</Text>
+              <Text style={styles.statLabel}>XP</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{user?.level || 1}</Text>
+              <Text style={styles.statLabel}>Level</Text>
+            </View>
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>{user?.streak || 0}</Text>
+              <Text style={styles.statLabel}>Streak 🔥</Text>
+            </View>
+          </View>
+        ) : (
+          /* Infinite Marquee when no pending challenge */
+          <View style={styles.marqueeContainer}>
+            <View style={styles.discoverPill}>
+              <Text style={styles.discoverLabel}>DISCOVER</Text>
+            </View>
+            <View style={styles.marqueeRows}>
+              {/* Row 1 - Normal speed, left */}
+              <InfiniteMarquee
+                items={DISCOVERY_TOPICS.slice(0, 5)}
+                speed={35000}
+                reverse={false}
+                fontSize={13}
+              />
+              {/* Row 2 - Slower, right (reverse) */}
+              <InfiniteMarquee
+                items={DISCOVERY_TOPICS.slice(5)}
+                speed={40000}
+                reverse={true}
+                fontSize={13}
+              />
+            </View>
+          </View>
         )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -168,16 +231,84 @@ const styles = StyleSheet.create({
   },
   greeting: {
     fontFamily: FONTS.heading,
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: COLORS.text.primary,
+    paddingHorizontal: 8,
+    marginTop: 0,
+    marginBottom: 12,
+  },
+  heroSection: {
+    flex: 0.65,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    paddingTop: 24,
+  },
+  cardContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  discoverySection: {
+    flex: 0.35,
+    paddingTop: 16,
+    // justifyContent: 'center',
+  },
+  statsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    backgroundColor: COLORS.background.secondary,
+    marginHorizontal: 16,
+    borderRadius: 16,
+  },
+  statItem: {
+    alignItems: 'center',
+  },
+  statValue: {
+    fontFamily: FONTS.heading,
     fontSize: 28,
     fontWeight: 'bold',
     color: COLORS.text.primary,
-    paddingHorizontal: 16,
-    paddingTop: 8,
-    marginBottom: 16,
   },
-  challengeFullScreen: {
+  statLabel: {
+    fontFamily: FONTS.body,
+    fontSize: 12,
+    color: COLORS.text.secondary,
+    marginTop: 4,
+  },
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: COLORS.text.secondary,
+    opacity: 0.3,
+  },
+  marqueeContainer: {
     flex: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
+    justifyContent: 'center',
+    overflow: 'hidden',
+  },
+  discoverPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(240, 238, 231, 0.08)',
+    borderRadius: 16,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    marginLeft: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(240, 238, 231, 0.15)',
+  },
+  discoverLabel: {
+    fontFamily: FONTS.heading,
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#F0EEE7',
+    letterSpacing: 3,
+    opacity: 0.8,
+  },
+  marqueeRows: {
+    gap: 12,
   },
 });

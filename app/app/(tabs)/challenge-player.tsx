@@ -62,6 +62,14 @@ export default function ChallengePlayer() {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [questionStartTime, setQuestionStartTime] = useState(Date.now());
   const [allQuestions, setAllQuestions] = useState<string[]>([]);
+  
+  // Collected responses (stored locally until challenge complete)
+  const [collectedResponses, setCollectedResponses] = useState<Array<{
+    questionIndex: number;
+    questionText: string;
+    responseText: string;
+    thinkingTime: number;
+  }>>([]);
 
   // Load initial challenge
   useEffect(() => {
@@ -95,6 +103,9 @@ export default function ChallengePlayer() {
           challengeId
         );
         
+        console.log('Challenge loaded from library:', JSON.stringify(challengeDoc, null, 2));
+        console.log('Questions field:', challengeDoc.questions);
+        
         const challengeData: Challenge = {
           id: challengeDoc.$id,
           title: challengeDoc.title || challengeDoc.topicName,
@@ -107,10 +118,13 @@ export default function ChallengePlayer() {
           mutator: challengeDoc.mutator,
         };
         
+        console.log('Questions to set:', challengeDoc.questions?.length || 0);
+        
         setCurrentChallenge(challengeData);
         setAllQuestions(challengeDoc.questions || []);
         setCurrentQuestionIndex(0);
         setQuestionStartTime(Date.now());
+        setCollectedResponses([]);
         setLoading(false);
         return;
       }
@@ -173,6 +187,7 @@ export default function ChallengePlayer() {
         setAllQuestions(result.data.questions || []);
         setCurrentQuestionIndex(0);
         setQuestionStartTime(Date.now());
+        setCollectedResponses([]);
       } else {
         throw new Error(result.error || 'Failed to load challenge');
       }
@@ -224,42 +239,69 @@ export default function ChallengePlayer() {
 
   /**
    * WIRING: Submit Question Response (Multi-Step)
+   * Collects responses locally and submits all at once when challenge is complete
    */
   const handleNextQuestion = async () => {
-    if (!currentChallenge || !user || !responseText.trim()) return;
-    if (allQuestions.length === 0) return;
+    console.log('handleNextQuestion called');
+    console.log('currentChallenge:', currentChallenge);
+    console.log('user:', user?.$id);
+    console.log('responseText:', responseText?.trim()?.length);
+    console.log('allQuestions:', allQuestions);
+    console.log('allQuestions.length:', allQuestions.length);
+    
+    if (!currentChallenge || !user || !responseText.trim()) {
+      console.log('Early return: missing currentChallenge, user, or responseText');
+      return;
+    }
+    if (allQuestions.length === 0) {
+      console.log('Early return: allQuestions is empty');
+      return;
+    }
 
     const currentQuestion = allQuestions[currentQuestionIndex];
     const questionThinkingTime = Math.floor((Date.now() - questionStartTime) / 1000);
+    const isLastQuestion = currentQuestionIndex >= allQuestions.length - 1;
 
-    setLoading(true);
-    try {
-      const execution = await functions.createExecution(
-        'submit-challenge',
-        JSON.stringify({
-          userId: user.$id,
-          challengeId: currentChallenge.id,
-          questionIndex: currentQuestionIndex,
-          questionText: currentQuestion,
-          responseText: responseText,
-          thinkingTime: questionThinkingTime,
-        })
-      );
+    // Store this response locally
+    const newResponse = {
+      questionIndex: currentQuestionIndex,
+      questionText: currentQuestion,
+      responseText: responseText,
+      thinkingTime: questionThinkingTime,
+    };
+    
+    const updatedResponses = [...collectedResponses, newResponse];
+    setCollectedResponses(updatedResponses);
 
-      if (execution.status === 'failed') {
-        throw new Error('Function execution failed. Check Appwrite console for logs.');
-      }
-
-      if (!execution.responseBody || execution.responseBody.trim() === '') {
-        throw new Error('Function returned empty response. Check environment variables.');
-      }
-
-      const result = JSON.parse(execution.responseBody);
-
-      if (result.success) {
-        const { data } = result;
+    if (isLastQuestion) {
+      // All questions answered - submit to backend
+      setLoading(true);
+      try {
+        const totalThinkingTime = updatedResponses.reduce((sum, r) => sum + r.thinkingTime, 0);
         
-        if (data.isLastQuestion) {
+        const execution = await functions.createExecution(
+          'submit-challenge',
+          JSON.stringify({
+            userId: user.$id,
+            challengeId: currentChallenge.id,
+            responses: updatedResponses,
+            totalThinkingTime: totalThinkingTime,
+          })
+        );
+
+        if (execution.status === 'failed') {
+          throw new Error('Function execution failed. Check Appwrite console for logs.');
+        }
+
+        if (!execution.responseBody || execution.responseBody.trim() === '') {
+          throw new Error('Function returned empty response. Check environment variables.');
+        }
+
+        const result = JSON.parse(execution.responseBody);
+
+        if (result.success) {
+          const { data } = result;
+          
           // Challenge completed - show total results
           Alert.alert(
             '🎉 Challenge Complete!',
@@ -275,6 +317,7 @@ export default function ChallengePlayer() {
                   setResponseText('');
                   setCurrentQuestionIndex(0);
                   setAllQuestions([]);
+                  setCollectedResponses([]);
                   loadChallenge();
                 },
               },
@@ -286,31 +329,26 @@ export default function ChallengePlayer() {
             ]
           );
         } else {
-          // Move to next question
-          setCurrentQuestionIndex(prev => prev + 1);
-          setResponseText('');
-          setQuestionStartTime(Date.now());
-          
-          // Show progress feedback
-          Alert.alert(
-            '✅ Question Saved!',
-            `You earned ${data.xpEarnedThisQuestion} XP!\n\n` +
-            `Progress: ${data.questionsAnswered}/${data.totalQuestions} questions completed`,
-            [{ text: 'Continue' }]
-          );
+          // Remove the failed response from collected
+          setCollectedResponses(collectedResponses);
+          throw new Error(result.error || 'Failed to submit challenge');
         }
-      } else {
-        throw new Error(result.error || 'Failed to submit response');
+      } catch (error: any) {
+        let errorMessage = 'Failed to submit your challenge. Please try again.';
+        if (error.message) {
+          errorMessage += `\n\nDetails: ${error.message}`;
+        }
+        // Revert the collected response on error
+        setCollectedResponses(collectedResponses);
+        Alert.alert('Error', errorMessage);
+      } finally {
+        setLoading(false);
       }
-    } catch (error: any) {
-      let errorMessage = 'Failed to submit your answer. Please try again.';
-      if (error.message) {
-        errorMessage += `\n\nDetails: ${error.message}`;
-      }
-      
-      Alert.alert('Error', errorMessage);
-    } finally {
-      setLoading(false);
+    } else {
+      // Move to next question (no API call, just local state update)
+      setCurrentQuestionIndex(prev => prev + 1);
+      setResponseText('');
+      setQuestionStartTime(Date.now());
     }
   };
 
