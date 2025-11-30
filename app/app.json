@@ -4,12 +4,12 @@
     "slug": "synapse",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/full_logo.png",
+    "icon": "./assets/splash_logo.png",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "scheme": "synapse",
     "splash": {
-      "image": "./assets/full_logo.png",
+      "image": "./assets/splash_logo.png",
       "resizeMode": "contain",
       "backgroundColor": "#000000"
     },
@@ -23,7 +23,7 @@
     },
     "android": {
       "adaptiveIcon": {
-        "foregroundImage": "./assets/icon.png",
+        "foregroundImage": "./assets/splash_logo.png",
         "backgroundColor": "#000000"
       },
       "edgeToEdgeEnabled": true,

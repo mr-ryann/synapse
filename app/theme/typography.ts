@@ -1,7 +1,10 @@
 export const FONTS = {
-  brand: 'Gang Of Three',
-  heading: 'Funnel Display Light',
-  body: 'Funnel Sans Light',
+  brand: 'Anton_400Regular',
+  heading: 'Anton_400Regular',
+  body: 'Inter_400Regular',
+  bodyMedium: 'Inter_500Medium',
+  bodySemiBold: 'Inter_600SemiBold',
+  bodyBold: 'Inter_700Bold',
 };
 
 export const FONT_WEIGHTS = {

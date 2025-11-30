@@ -5,6 +5,7 @@ import { useUserStore } from '../../stores/useUserStore';
 import { useRouter } from 'expo-router';
 import { databases, functions } from '../../lib/appwrite';
 import { Query } from 'react-native-appwrite';
+import { Compass } from 'lucide-react-native';
 
 // Import components
 import { ChallengeCard } from '../../components/cards/ChallengeCard';
@@ -260,20 +261,21 @@ export default function HomeScreen() {
           /* Infinite Marquee when no pending challenge */
           <View style={styles.marqueeContainer}>
             <View style={styles.discoverPill}>
+              <Compass size={16} color="#F0EEE7" strokeWidth={2.5} style={{ opacity: 0.8 }} />
               <Text style={styles.discoverLabel}>DISCOVER</Text>
             </View>
             <View style={styles.marqueeRows}>
               {/* Row 1 - Normal speed, left */}
               <InfiniteMarquee
                 items={topics.slice(0, Math.ceil(topics.length / 2))}
-                speed={10000}
+                speed={18}
                 reverse={false}
                 fontSize={12}
               />
               {/* Row 2 - Slower, right (reverse) */}
               <InfiniteMarquee
                 items={topics.slice(Math.ceil(topics.length / 2))}
-                speed={15000}
+                speed={15}
                 reverse={true}
                 fontSize={12}
               />
@@ -353,21 +355,25 @@ const styles = StyleSheet.create({
   },
   marqueeContainer: {
     flex: 1,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    paddingTop: 48,
     overflow: 'hidden',
   },
   discoverPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
     alignSelf: 'flex-start',
     marginLeft: 16,
     marginBottom: 12,
+    gap: 8,
   },
   discoverLabel: {
     fontFamily: FONTS.heading,
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
     color: '#F0EEE7',
     letterSpacing: 3,
-    opacity: 0.7,
+    opacity: 0.8,
   },
   marqueeRows: {
     gap: 12,

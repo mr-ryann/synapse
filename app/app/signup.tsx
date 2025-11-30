@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../hooks/useAuth';
+import { Logo } from '../components/ui/Logo';
 import { COLORS, FONTS } from '../theme';
 
 export default function Signup() {
@@ -25,6 +26,10 @@ export default function Signup() {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <View style={styles.logoContainer}>
+        <Logo size="large" />
+      </View>
+      
       <Text style={styles.title}>Create Account</Text>
       
       <TextInput
@@ -110,6 +115,10 @@ const styles = StyleSheet.create({
     paddingVertical: 40,
     backgroundColor: COLORS.background.primary,
     gap: 12,
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 32,
   },
   title: {
     fontSize: 32,

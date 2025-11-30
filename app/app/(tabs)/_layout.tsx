@@ -6,7 +6,9 @@ export default function TabsLayout() {
   return (
     <Tabs
       tabBar={(props) => <BottomTabBar {...props} />}
-      screenOptions={{ headerShown: false }}
+      screenOptions={{ 
+        headerShown: false,
+      }}
     >
       <Tabs.Screen 
         name="index" 
@@ -23,6 +25,7 @@ export default function TabsLayout() {
       <Tabs.Screen 
         name="search" 
         options={{
+          href: null, // Hidden - search is now in library
           title: 'Search',
         }}
       />
@@ -33,8 +36,21 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen 
+        name="journal" 
+        options={{
+          title: 'Journal',
+        }}
+      />
+      <Tabs.Screen 
+        name="profile" 
+        options={{
+          title: 'Profile',
+        }}
+      />
+      <Tabs.Screen 
         name="settings" 
         options={{
+          href: null, // Hidden - replaced by profile
           title: 'Settings',
         }}
       />

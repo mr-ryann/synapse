@@ -1,5 +1,6 @@
 import os
 import json
+import uuid
 from datetime import datetime, timezone
 from appwrite.client import Client
 from appwrite.services.databases import Databases
@@ -160,31 +161,14 @@ def main(context):
         total_xp = base_xp + completion_bonus + time_bonus + length_bonus
         context.log(f"Total XP earned: {total_xp}")
 
-        # Generate deterministic document ID: {userID}_{challengeID}
-        # This ensures one response per user per challenge
-        doc_id = f"{user_id}_{challenge_id}"
-        context.log(f"Document ID: {doc_id}")
+        context.log(f"=== SUBMISSION DEBUG ===")
+        context.log(f"user_id: '{user_id}'")
+        context.log(f"challenge_id: '{challenge_id}'")
 
-        # Check if this response already exists (retry)
-        is_retry = False
-        try:
-            existing_doc = databases.get_document(
-                database_id=database_id,
-                collection_id="responses",
-                document_id=doc_id
-            )
-            is_retry = True
-            context.log(f"Found existing response - this is a retry")
-        except AppwriteException as e:
-            if "not found" in str(e).lower() or "could not be found" in str(e).lower():
-                is_retry = False
-                context.log(f"No existing response - first attempt")
-            else:
-                raise e
-
-        # Prepare response document data (no challengeID - it's in the $id)
+        # Prepare response document data - now includes challengeID as a field
         response_data = {
             "userID": user_id,
+            "challengeID": challenge_id,
             "responses": response_texts,
             "questions": question_texts,
             "thinkingTimes": thinking_times,
@@ -193,30 +177,65 @@ def main(context):
             "completedAt": datetime.now(timezone.utc).isoformat()
         }
 
-        # Create or update response document
-        if is_retry:
-            # Update existing (retry)
-            response_doc = databases.update_document(
+        # Check if user already submitted this challenge by querying
+        is_retry = False
+        existing_doc = None
+        
+        try:
+            existing_response = databases.list_documents(
                 database_id=database_id,
                 collection_id="responses",
-                document_id=doc_id,
-                data=response_data
-            )
-            context.log(f"Updated response document: {response_doc['$id']}")
-        else:
-            # Create new
-            response_doc = databases.create_document(
-                database_id=database_id,
-                collection_id="responses",
-                document_id=doc_id,
-                data=response_data,
-                permissions=[
-                    f'read("user:{user_id}")',
-                    f'update("user:{user_id}")',
-                    f'delete("user:{user_id}")'
+                queries=[
+                    Query.equal("userID", [user_id]),
+                    Query.equal("challengeID", [challenge_id]),
+                    Query.limit(1)
                 ]
             )
-            context.log(f"Created response document: {response_doc['$id']}")
+            
+            if existing_response["documents"] and len(existing_response["documents"]) > 0:
+                existing_doc = existing_response["documents"][0]
+                is_retry = True
+                context.log(f"Found existing response for user {user_id} and challenge {challenge_id}")
+        except AppwriteException as e:
+            context.log(f"Query for existing response failed: {str(e)}")
+            is_retry = False
+
+        if is_retry and existing_doc:
+            # Update existing document
+            try:
+                response_doc = databases.update_document(
+                    database_id=database_id,
+                    collection_id="responses",
+                    document_id=existing_doc["$id"],
+                    data=response_data
+                )
+                context.log(f"Updated existing response document: {response_doc['$id']}")
+            except AppwriteException as update_err:
+                context.error(f"Failed to update document: {str(update_err)}")
+                raise update_err
+        else:
+            # Create new document with a truly unique ID using uuid
+            unique_doc_id = str(uuid.uuid4()).replace('-', '')[:20]
+            context.log(f"Attempting to create document with ID: {unique_doc_id}")
+            
+            try:
+                response_doc = databases.create_document(
+                    database_id=database_id,
+                    collection_id="responses",
+                    document_id=unique_doc_id,
+                    data=response_data,
+                    permissions=[
+                        f'read("user:{user_id}")',
+                        f'update("user:{user_id}")',
+                        f'delete("user:{user_id}")'
+                    ]
+                )
+                context.log(f"Created new response document: {response_doc['$id']}")
+            except AppwriteException as create_err:
+                context.error(f"Failed to create document with ID {unique_doc_id}: {str(create_err)}")
+                context.error(f"user_id: {user_id}, challenge_id: {challenge_id}")
+                context.error(f"response_data keys: {list(response_data.keys())}")
+                raise create_err
 
         # Update user stats (only add XP if not a retry, or add difference)
         try:

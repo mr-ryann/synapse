@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, ActivityIndicator, TouchableOpacity, LayoutAnimation, Platform, UIManager } from 'react-native';
 
 // Enable LayoutAnimation for Android
@@ -6,7 +6,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { ChevronDown, ChevronRight } from 'lucide-react-native';
+import { ChevronDown, ChevronRight, Check } from 'lucide-react-native';
 import { useUserStore } from '../../stores/useUserStore';
 import { databases } from '../../lib/appwrite';
 import { Query } from 'react-native-appwrite';
@@ -34,24 +34,66 @@ export default function LibraryScreen() {
   const router = useRouter();
   const { expandTopic } = useLocalSearchParams<{ expandTopic?: string }>();
   const [topicGroups, setTopicGroups] = useState<TopicGroup[]>([]);
+  const [completedChallengeIds, setCompletedChallengeIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const lastExpandedRef = useRef<string | null>(null);
 
   useEffect(() => {
     if (user) {
       fetchAllChallenges();
+      fetchCompletedChallenges();
     }
   }, [user]);
 
+  const fetchCompletedChallenges = async () => {
+    if (!user) return;
+    
+    try {
+      const responsesRes = await databases.listDocuments(
+        'synapse',
+        'responses',
+        [
+          Query.equal('userID', user.$id),
+          Query.limit(500),
+        ]
+      );
+      
+      const completedIds = new Set<string>(
+        responsesRes.documents.map((doc: any) => doc.challengeID)
+      );
+      setCompletedChallengeIds(completedIds);
+    } catch (error) {
+      console.error('Error fetching completed challenges:', error);
+    }
+  };
+
   // Handle expandTopic parameter - expand the specified topic
   useEffect(() => {
-    if (expandTopic && topicGroups.length > 0) {
-      const decodedTopic = decodeURIComponent(expandTopic);
+    // Only process if we have a topic to expand, groups are loaded, and we haven't already processed this exact param
+    if (!expandTopic || topicGroups.length === 0) return;
+    if (lastExpandedRef.current === expandTopic) return;
+    
+    const decodedTopic = decodeURIComponent(expandTopic);
+    console.log('Expanding topic:', decodedTopic);
+    console.log('Available topics:', topicGroups.map(g => g.topicName));
+    
+    // Find matching topic (case-insensitive)
+    const matchingGroup = topicGroups.find(
+      group => group.topicName.toLowerCase() === decodedTopic.toLowerCase()
+    );
+    
+    if (matchingGroup) {
+      console.log('Found matching group:', matchingGroup.topicName);
+      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setTopicGroups(prev => prev.map(group => ({
         ...group,
         isExpanded: group.topicName.toLowerCase() === decodedTopic.toLowerCase(),
       })));
+      lastExpandedRef.current = expandTopic;
+    } else {
+      console.log('No matching group found for:', decodedTopic);
     }
-  }, [expandTopic, topicGroups.length]);
+  }, [expandTopic, topicGroups]);
 
   const fetchAllChallenges = async () => {
     if (!user) return;
@@ -182,9 +224,6 @@ export default function LibraryScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.inner}>
           <Text style={styles.heading}>Library</Text>
-          <Text style={styles.description}>
-            Explore all available challenges across different topics
-          </Text>
           
           {topicGroups.length > 0 ? (
             <View style={styles.topicsContainer}>
@@ -219,37 +258,53 @@ export default function LibraryScreen() {
                   {/* Challenges List - Collapsible */}
                   {group.isExpanded && (
                     <View style={styles.challengesList}>
-                      {group.challenges.map((challenge) => (
-                        <TouchableOpacity
-                          key={challenge.$id}
-                          style={styles.challengeItem}
-                          onPress={() => navigateToChallenge(challenge.$id)}
-                          activeOpacity={0.7}
-                        >
-                          <View style={styles.challengeInfo}>
-                            <Text style={styles.challengeTitle} numberOfLines={2}>
-                              {challenge.title}
-                            </Text>
-                            <View style={styles.challengeMeta}>
-                              <Text style={styles.challengeTime}>
-                                ~{challenge.estimatedTime} min
-                              </Text>
-                              <View style={[
-                                styles.difficultyBadge,
-                                { backgroundColor: getDifficultyColor(challenge.difficulty) + '20' }
-                              ]}>
+                      {group.challenges.map((challenge) => {
+                        const isCompleted = completedChallengeIds.has(challenge.$id);
+                        return (
+                          <TouchableOpacity
+                            key={challenge.$id}
+                            style={[
+                              styles.challengeItem,
+                              isCompleted && styles.challengeItemCompleted
+                            ]}
+                            onPress={() => navigateToChallenge(challenge.$id)}
+                            activeOpacity={0.7}
+                          >
+                            <View style={styles.challengeInfo}>
+                              <View style={styles.challengeTitleRow}>
+                                {isCompleted && (
+                                  <View style={styles.completedBadge}>
+                                    <Check size={12} color={COLORS.background.primary} strokeWidth={3} />
+                                  </View>
+                                )}
                                 <Text style={[
-                                  styles.difficultyText,
-                                  { color: getDifficultyColor(challenge.difficulty) }
-                                ]}>
-                                  {getDifficultyLabel(challenge.difficulty)}
+                                  styles.challengeTitle,
+                                  isCompleted && styles.challengeTitleCompleted
+                                ]} numberOfLines={2}>
+                                  {challenge.title}
                                 </Text>
                               </View>
+                              <View style={styles.challengeMeta}>
+                                <Text style={styles.challengeTime}>
+                                  ~{challenge.estimatedTime} min
+                                </Text>
+                                <View style={[
+                                  styles.difficultyBadge,
+                                  { backgroundColor: getDifficultyColor(challenge.difficulty) + '20' }
+                                ]}>
+                                  <Text style={[
+                                    styles.difficultyText,
+                                    { color: getDifficultyColor(challenge.difficulty) }
+                                  ]}>
+                                    {getDifficultyLabel(challenge.difficulty)}
+                                  </Text>
+                                </View>
+                              </View>
                             </View>
-                          </View>
-                          <ChevronRight size={20} color={COLORS.text.muted} />
-                        </TouchableOpacity>
-                      ))}
+                            <ChevronRight size={20} color={COLORS.text.muted} />
+                          </TouchableOpacity>
+                        );
+                      })}
                     </View>
                   )}
                 </View>
@@ -293,12 +348,6 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.heading,
     fontWeight: 'bold',
     color: COLORS.text.primary,
-  },
-  description: {
-    fontSize: 16,
-    fontFamily: FONTS.body,
-    color: COLORS.text.secondary,
-    marginTop: 4,
     marginBottom: 20,
   },
   loadingContainer: {
@@ -370,16 +419,36 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border.subtle,
   },
+  challengeItemCompleted: {
+    backgroundColor: COLORS.accent.secondary + '08',
+  },
   challengeInfo: {
     flex: 1,
     marginRight: 12,
+  },
+  challengeTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  completedBadge: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: COLORS.accent.secondary,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   challengeTitle: {
     fontSize: 16,
     fontFamily: FONTS.body,
     fontWeight: '500',
     color: COLORS.text.primary,
-    marginBottom: 6,
+    flex: 1,
+  },
+  challengeTitleCompleted: {
+    color: COLORS.text.secondary,
   },
   challengeMeta: {
     flexDirection: 'row',

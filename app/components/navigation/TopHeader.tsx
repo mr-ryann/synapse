@@ -1,10 +1,11 @@
 import React from 'react';
-import { View, StyleSheet, Text, Image } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { StreakIndicator } from './StreakIndicator';
 import { NotificationMenu } from './NotificationMenu';
 import { SearchButton } from './SearchButton';
-import { COLORS, FONTS } from '../../theme';
+import { Logo } from '../ui/Logo';
+import { COLORS } from '../../theme';
 
 export const TopHeader = React.memo(() => {
   const insets = useSafeAreaInsets();
@@ -20,12 +21,7 @@ export const TopHeader = React.memo(() => {
     >
       <View style={styles.content}>
         <View style={styles.leftSide}>
-          <Image
-            source={require('../../assets/icon.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={styles.brand}>SYNAPSE</Text>
+          <Logo size="medium" showText={true} />
         </View>
         
         {/* Right side - streak, notifications, search */}
@@ -67,16 +63,5 @@ const styles = StyleSheet.create({
   rightSide: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  logo: {
-    width: 50,
-    height: 50,
-    marginRight: 12,
-  },
-  brand: {
-    fontFamily: FONTS.brand,
-    fontSize: 20,
-    letterSpacing: 4,
-    color: COLORS.text.primary,
   },
 });

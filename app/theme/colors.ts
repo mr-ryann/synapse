@@ -1,47 +1,48 @@
-// Global color palette for the "Aether" theme
-// Dark, high-contrast, tech-forward aesthetic inspired by Synapse brand
+
+// Global color palette for the "Philosopher" theme
+// Deep Licorice, Gold, and Warm Stone aesthetic for focused thinking
 
 export const COLORS = {
   // Core backgrounds
   background: {
-    primary: '#000000', // True black
-    secondary: '#121212', // Dark charcoal for surfaces
-    elevated: '#1a1a1a', // Slightly lighter for cards
+    primary: '#0C0A09',   // Deep Licorice (Option A - OLED friendly)
+    secondary: '#1C1917', // Warm Stone for surfaces
+    elevated: '#292524',  // Lighter Stone for cards/modals
   },
 
   // Text colors
   text: {
-    primary: '#F0EEE7', // Off-white
-    secondary: '#AAAAAA',
-    muted: '#777777',
+    primary: '#f0eee7',   // Parchment White (Your specific request)
+    secondary: '#A8A29E', // Warm Grey
+    muted: '#57534E',     // Deep Stone (for metadata/disabled)
   },
 
-  // Accent colors inspired by the Synapse gradient
+  // Accent colors
   accent: {
-    primary: '#E03B8C', // Vibrant Magenta/Pink
-    secondary: '#6F22BC', // Rich Purple
-    tertiary: '#2B9AF4', // Cool electric blue for highlights
+    primary: '#F58727',   // Pure Gold (Option B - The "Waypoints" color)
+    secondary: '#F8A863', // Metallic Bronze/Darker Gold
+    tertiary: '#78716C',  // Stone Grey (Neutral accent)
   },
 
-  // Semantic colors (cyber-inspired variants)
+  // Semantic colors (Muted to fit the serious tone)
   semantic: {
-    success: '#36D47D',
-    error: '#FF5E5E',
-    warning: '#FFB347',
-    info: '#4FB8FF',
+    success: '#467814',   // Emerald
+    error: '#EF4444',     // Matte Red
+    warning: '#E86615',   // Amber
+    info: '#0EA5E9',      // Sky Blue (for neutral info)
   },
 
   // Borders and dividers
   border: {
-    subtle: '#1f1f1f',
-    default: '#2c2c2c',
-    accent: '#E03B8C',
+    subtle: '#1C1917',    // Very subtle separation
+    default: '#292524',   // Standard card border
+    accent: '#F58727',    // Gold border for active states
   },
 
   // Shadows / overlays
   overlay: {
-    scrim: 'rgba(0, 0, 0, 0.7)',
-    glow: 'rgba(224, 59, 140, 0.35)',
+    scrim: 'rgba(12, 10, 9, 0.9)',      // Deep warm dark overlay
+    glow: 'rgba(255, 215, 0, 0.15)',    // Subtle Gold glow (low opacity)
   },
 };
 

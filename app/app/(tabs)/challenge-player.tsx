@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   ScrollView,
@@ -9,10 +9,16 @@ import {
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
+  Keyboard,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+  Modal,
+  Pressable,
+  Dimensions,
 } from 'react-native';
 import { Text } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Lightbulb, Send } from 'lucide-react-native';
+import { Lightbulb, Send, X, PenLine } from 'lucide-react-native';
 
 import { databases, functions, account } from '../../lib/appwrite';
 import { useChallengeStore } from '../../stores/useChallengeStore';
@@ -69,7 +75,12 @@ export default function ChallengePlayer() {
     questionText: string;
     responseText: string;
     thinkingTime: number;
-  }>>([]);
+  }>>([]); 
+  
+  // Ref for TextInput to handle keyboard dismissal
+  const textInputRef = useRef<TextInput>(null);
+  const lastScrollY = useRef(0);
+  const [isTextboxExpanded, setIsTextboxExpanded] = useState(false);
 
   // Load initial challenge
   useEffect(() => {
@@ -279,14 +290,24 @@ export default function ChallengePlayer() {
       try {
         const totalThinkingTime = updatedResponses.reduce((sum, r) => sum + r.thinkingTime, 0);
         
+        // Debug logging
+        console.log('=== SUBMIT CHALLENGE DEBUG ===');
+        console.log('user.$id:', user.$id);
+        console.log('currentChallenge:', JSON.stringify(currentChallenge, null, 2));
+        console.log('currentChallenge.id:', currentChallenge.id);
+        console.log('typeof currentChallenge.id:', typeof currentChallenge.id);
+        
+        const payload = {
+          userId: user.$id,
+          challengeId: currentChallenge.id,
+          responses: updatedResponses,
+          totalThinkingTime: totalThinkingTime,
+        };
+        console.log('Payload being sent:', JSON.stringify(payload, null, 2));
+        
         const execution = await functions.createExecution(
           'submit-challenge',
-          JSON.stringify({
-            userId: user.$id,
-            challengeId: currentChallenge.id,
-            responses: updatedResponses,
-            totalThinkingTime: totalThinkingTime,
-          })
+          JSON.stringify(payload)
         );
 
         if (execution.status === 'failed') {
@@ -375,12 +396,22 @@ export default function ChallengePlayer() {
     );
   }
 
+  // Handle scroll to dismiss keyboard when scrolling past textbox
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const currentScrollY = event.nativeEvent.contentOffset.y;
+    // If scrolling down and moved more than 50px, dismiss keyboard
+    if (currentScrollY > lastScrollY.current + 50) {
+      Keyboard.dismiss();
+    }
+    lastScrollY.current = currentScrollY;
+  };
+
   return (
     <View style={styles.container}>
       <AppHeader 
-        title={currentChallenge.topic}
-        subtitle={`~${currentChallenge.estimatedTime} min • Difficulty ${currentChallenge.difficulty}`}
         showBackButton={true}
+        title={currentChallenge.title}
+        subtitle={currentChallenge.topic}
       />
       
       <KeyboardAvoidingView
@@ -393,27 +424,47 @@ export default function ChallengePlayer() {
           contentContainerStyle={styles.contentContainer}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
         >
-          {/* Progress Indicator */}
+          {/* Node Progress Indicator - Jagged Pulse Style */}
           {allQuestions.length > 0 && (
-            <View style={styles.progressContainer}>
-              <Text style={styles.progressText}>
-                Question {currentQuestionIndex + 1} of {allQuestions.length}
-              </Text>
-              <View style={styles.progressBar}>
-                <View 
-                  style={[
-                    styles.progressFill, 
-                    { width: `${((currentQuestionIndex + 1) / allQuestions.length) * 100}%` }
-                  ]} 
-                />
+            <View style={styles.nodeProgressContainer}>
+              <View style={styles.nodeRow}>
+                {allQuestions.map((_, index) => (
+                  <View key={index} style={styles.nodeWrapper}>
+                    <View 
+                      style={[
+                        styles.node,
+                        index < currentQuestionIndex && styles.nodeCompleted,
+                        index === currentQuestionIndex && styles.nodeCurrent,
+                        index > currentQuestionIndex && styles.nodeUpcoming,
+                        // Alternate vertical position for jagged effect
+                        index % 2 === 1 && styles.nodeOffset,
+                      ]}
+                    />
+                    {index < allQuestions.length - 1 && (
+                      <View style={styles.connectorWrapper}>
+                        <View 
+                          style={[
+                            styles.nodeConnectorDiagonal,
+                            index % 2 === 0 ? styles.connectorDown : styles.connectorUp,
+                            index < currentQuestionIndex && styles.connectorCompleted,
+                          ]}
+                        />
+                      </View>
+                    )}
+                  </View>
+                ))}
               </View>
+              <Text style={styles.nodeCounter}>
+                Node {currentQuestionIndex + 1} of {allQuestions.length}
+              </Text>
             </View>
           )}
 
-          {/* Challenge Section */}
+          {/* Question Text */}
           <View style={styles.section}>
-            <Text style={styles.challengeTitle}>{currentChallenge.title}</Text>
             {allQuestions.length > 0 && (
               <Text style={styles.questionText}>
                 {allQuestions[currentQuestionIndex]}
@@ -421,57 +472,33 @@ export default function ChallengePlayer() {
             )}
           </View>
 
-          {/* Thinking Timer */}
-          <View style={styles.timerContainer}>
-            <ThinkingTimer
-              isActive={isThinking}
-              time={thinkingTime}
-              onTimeUpdate={setThinkingTime}
-            />
-          </View>
+          {/* Hidden Thinking Timer - runs in background */}
+          <ThinkingTimer
+            isActive={isThinking}
+            time={thinkingTime}
+            onTimeUpdate={setThinkingTime}
+          />
 
-          {/* Blank Canvas */}
-          <View style={styles.section}>
-            <Text style={styles.canvasLabel}>Your Thoughts</Text>
-            <Text style={styles.canvasSubtitle}>
-              Take your time. There's no rush. Write whatever comes to mind.
-            </Text>
-            <TextInput
+          {/* Compact Text Input - Expands on click */}
+          <Pressable 
+            style={styles.compactInputContainer}
+            onPress={() => setIsTextboxExpanded(true)}
+          >
+            <PenLine size={18} color={COLORS.text.muted} />
+            <Text 
               style={[
-                styles.textarea,
-                isThinking && styles.textareaFocused,
+                styles.compactInputText,
+                responseText && styles.compactInputTextFilled
               ]}
-              placeholder="Start writing your thoughts here..."
-              placeholderTextColor={COLORS.text.muted}
-              value={responseText}
-              onChangeText={setResponseText}
-              onFocus={() => setIsThinking(true)}
-              multiline
-              autoCapitalize="sentences"
-              textAlignVertical="top"
-            />
-          </View>
-
-          {/* Action Buttons */}
-          <View style={styles.buttonContainer}>
-            <TouchableOpacity
-              style={[
-                styles.hintButton,
-                (loadingHint || loading) && styles.buttonDisabled,
-              ]}
-              onPress={handleGetHint}
-              disabled={loadingHint || loading}
+              numberOfLines={2}
             >
-              {loadingHint ? (
-                <ActivityIndicator size="small" color={COLORS.accent.secondary} />
-              ) : (
-                <>
-                  <Lightbulb size={20} color={COLORS.accent.secondary} />
-                  <Text style={styles.hintButtonText}>Get a Hint</Text>
-                </>
-              )}
-            </TouchableOpacity>
+              {responseText || 'Tap to write your thoughts...'}
+            </Text>
+          </Pressable>
 
+          {/* Action Buttons - Redesigned */}
+          <View style={styles.buttonContainer}>
+            {/* Submit/Next Button - Pill shaped, left-center aligned */}
             <TouchableOpacity
               style={[
                 styles.submitButton,
@@ -486,15 +513,86 @@ export default function ChallengePlayer() {
                 <>
                   <Text style={styles.submitButtonText}>
                     {currentQuestionIndex === allQuestions.length - 1
-                      ? 'Complete Challenge'
-                      : 'Next Question'}
+                      ? 'Complete'
+                      : 'Next'}
                   </Text>
-                  <Send size={20} color={COLORS.background.primary} />
+                  <Send size={16} color={COLORS.background.primary} />
                 </>
               )}
             </TouchableOpacity>
+
+            {/* Hint Button - Circular, right aligned */}
+            <View style={styles.hintButtonWrapper}>
+              <TouchableOpacity
+                style={[
+                  styles.hintButton,
+                  (loadingHint || loading) && styles.buttonDisabled,
+                ]}
+                onPress={handleGetHint}
+                disabled={loadingHint || loading}
+              >
+                {loadingHint ? (
+                  <ActivityIndicator size="small" color={COLORS.accent.secondary} />
+                ) : (
+                  <Lightbulb size={22} color={COLORS.accent.secondary} />
+                )}
+              </TouchableOpacity>
+              <Text style={styles.hintButtonLabel}>Hint</Text>
+            </View>
           </View>
         </ScrollView>
+
+        {/* Floating Expanded Textbox Modal */}
+        <Modal
+          visible={isTextboxExpanded}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setIsTextboxExpanded(false)}
+        >
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.expandedModalContainer}
+          >
+            <Pressable 
+              style={styles.expandedModalBackdrop}
+              onPress={() => {
+                Keyboard.dismiss();
+                setIsTextboxExpanded(false);
+              }}
+            />
+            <View style={styles.expandedTextboxWrapper}>
+              <View style={styles.expandedHeader}>
+                <Text style={styles.expandedTitle}>Your Thoughts</Text>
+                <TouchableOpacity 
+                  onPress={() => setIsTextboxExpanded(false)}
+                  style={styles.closeButton}
+                >
+                  <X size={24} color={COLORS.text.secondary} />
+                </TouchableOpacity>
+              </View>
+              <TextInput
+                ref={textInputRef}
+                style={styles.expandedTextarea}
+                placeholder="Write your thoughts here..."
+                placeholderTextColor={COLORS.text.muted}
+                value={responseText}
+                onChangeText={setResponseText}
+                onFocus={() => setIsThinking(true)}
+                onBlur={() => setIsThinking(false)}
+                multiline
+                autoFocus
+                autoCapitalize="sentences"
+                textAlignVertical="top"
+              />
+              <TouchableOpacity 
+                style={styles.expandedDoneButton}
+                onPress={() => setIsTextboxExpanded(false)}
+              >
+                <Text style={styles.expandedDoneText}>Done</Text>
+              </TouchableOpacity>
+            </View>
+          </KeyboardAvoidingView>
+        </Modal>
 
         {/* Hint Modal */}
         {currentHint && (
@@ -519,122 +617,211 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingHorizontal: 20,
-    paddingVertical: 24,
+    paddingTop: 16,
     paddingBottom: 48,
   },
   section: {
     marginBottom: 24,
   },
-  challengeTitle: {
-    fontSize: 28,
-    fontFamily: FONTS.heading,
-    fontWeight: '700',
-    color: COLORS.text.primary,
-    lineHeight: 36,
-    marginBottom: 12,
-  },
-  progressContainer: {
+  nodeProgressContainer: {
     marginBottom: 20,
+    alignItems: 'flex-start',
   },
-  progressText: {
-    fontSize: 14,
-    fontFamily: FONTS.body,
-    fontWeight: '600',
-    color: COLORS.text.secondary,
-    marginBottom: 8,
-    textAlign: 'center',
+  nodeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 28,
   },
-  progressBar: {
-    height: 6,
+  nodeWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  node: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
     backgroundColor: COLORS.border.default,
-    borderRadius: 3,
-    overflow: 'hidden',
+    zIndex: 1,
   },
-  progressFill: {
-    height: '100%',
+  nodeOffset: {
+    marginTop: 14,
+  },
+  nodeCompleted: {
     backgroundColor: COLORS.accent.primary,
-    borderRadius: 3,
   },
-  questionText: {
-    fontSize: 20,
-    fontFamily: FONTS.body,
-    fontWeight: '600',
-    color: COLORS.text.primary,
-    lineHeight: 32,
-    marginTop: 16,
+  nodeCurrent: {
+    backgroundColor: COLORS.accent.primary,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: COLORS.accent.secondary,
   },
-  timerContainer: {
-    marginBottom: 24,
+  nodeUpcoming: {
+    backgroundColor: COLORS.border.default,
   },
-  canvasLabel: {
-    fontSize: 16,
-    fontFamily: FONTS.body,
-    fontWeight: '600',
-    color: COLORS.text.secondary,
-    marginBottom: 6,
+  connectorWrapper: {
+    width: 16,
+    height: 28,
+    justifyContent: 'center',
   },
-  canvasSubtitle: {
-    fontSize: 14,
+  nodeConnectorDiagonal: {
+    width: 18,
+    height: 2,
+    backgroundColor: COLORS.border.default,
+    position: 'absolute',
+  },
+  connectorDown: {
+    transform: [{ rotate: '35deg' }],
+    top: 6,
+  },
+  connectorUp: {
+    transform: [{ rotate: '-35deg' }],
+    bottom: 6,
+  },
+  connectorCompleted: {
+    backgroundColor: COLORS.accent.primary,
+  },
+  nodeCounter: {
+    fontSize: 12,
     fontFamily: FONTS.body,
     color: COLORS.text.muted,
-    marginBottom: 12,
+    marginTop: 8,
   },
-  textarea: {
-    borderWidth: 2,
+  questionText: {
+    fontSize: 18,
+    fontFamily: FONTS.body,
+    fontWeight: '500',
+    color: COLORS.text.secondary,
+    lineHeight: 28,
+    marginTop: 8,
+  },
+  compactInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderWidth: 1,
     borderColor: COLORS.border.default,
+    borderRadius: 12,
+    backgroundColor: COLORS.background.elevated,
+    marginBottom: 20,
+  },
+  compactInputText: {
+    flex: 1,
+    fontSize: 15,
+    fontFamily: FONTS.body,
+    color: COLORS.text.muted,
+  },
+  compactInputTextFilled: {
+    color: COLORS.text.primary,
+  },
+  expandedModalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  expandedModalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+  },
+  expandedTextboxWrapper: {
+    width: Dimensions.get('window').width - 40,
+    maxHeight: Dimensions.get('window').height * 0.6,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  expandedHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 4,
+  },
+  expandedTitle: {
+    fontSize: 16,
+    fontFamily: FONTS.heading,
+    fontWeight: '600',
+    color: COLORS.text.primary,
+  },
+  closeButton: {
+    padding: 4,
+  },
+  expandedTextarea: {
+    borderWidth: 2,
+    borderColor: COLORS.accent.primary,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
     fontFamily: FONTS.body,
     color: COLORS.text.primary,
     backgroundColor: COLORS.background.elevated,
-    minHeight: 250,
+    minHeight: 200,
+    maxHeight: 300,
     textAlignVertical: 'top',
   },
-  textareaFocused: {
-    borderColor: COLORS.accent.primary,
+  expandedDoneButton: {
+    alignSelf: 'flex-end',
+    paddingVertical: 10,
+    paddingHorizontal: 24,
+    marginTop: 12,
+    backgroundColor: COLORS.accent.primary,
+    borderRadius: 20,
+  },
+  expandedDoneText: {
+    fontSize: 14,
+    fontFamily: FONTS.body,
+    fontWeight: '600',
+    color: COLORS.background.primary,
   },
   buttonContainer: {
-    gap: 12,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
     marginTop: 8,
   },
+  hintButtonWrapper: {
+    alignItems: 'center',
+  },
   hintButton: {
-    flexDirection: 'row',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 12,
     backgroundColor: COLORS.background.elevated,
     borderWidth: 2,
     borderColor: COLORS.accent.secondary,
   },
-  hintButtonText: {
-    color: COLORS.accent.secondary,
-    fontSize: 16,
+  hintButtonLabel: {
+    marginTop: 6,
+    fontSize: 11,
     fontFamily: FONTS.body,
-    fontWeight: '600',
+    color: COLORS.accent.secondary,
+    fontWeight: '500',
   },
   submitButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 16,
-    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+    borderRadius: 28,
     backgroundColor: COLORS.accent.primary,
     shadowColor: COLORS.accent.primary,
-    shadowOffset: { width: 0, height: 8 },
+    shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    shadowRadius: 8,
+    elevation: 4,
   },
   submitButtonText: {
     color: COLORS.background.primary,
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: FONTS.body,
     fontWeight: '600',
-    letterSpacing: 0.5,
+    letterSpacing: 0.3,
   },
   submitButtonDisabled: {
     backgroundColor: COLORS.border.default,

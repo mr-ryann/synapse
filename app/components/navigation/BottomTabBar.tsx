@@ -1,16 +1,16 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Home, Search, BookOpen, Settings } from 'lucide-react-native';
+import { Home, BookOpen, NotebookPen, User } from 'lucide-react-native';
 import { TabButton } from './TabButton';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../../theme';
-import type { BottomTabBarProps } from '../../node_modules/@react-navigation/bottom-tabs/lib/typescript/src';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 const TABS = [
   { name: 'home', icon: Home, routeName: 'home', label: 'Home' },
-  { name: 'search', icon: Search, routeName: 'search', label: 'Search' },
   { name: 'library', icon: BookOpen, routeName: 'library', label: 'Library' },
-  { name: 'settings', icon: Settings, routeName: 'settings', label: 'Settings' },
+  { name: 'journal', icon: NotebookPen, routeName: 'journal', label: 'Journal' },
+  { name: 'profile', icon: User, routeName: 'profile', label: 'Profile' },
 ] as const;
 
 export const BottomTabBar = React.memo<BottomTabBarProps>(({ state, navigation }) => {
