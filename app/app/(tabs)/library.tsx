@@ -74,8 +74,6 @@ export default function LibraryScreen() {
     if (lastExpandedRef.current === expandTopic) return;
     
     const decodedTopic = decodeURIComponent(expandTopic);
-    console.log('Expanding topic:', decodedTopic);
-    console.log('Available topics:', topicGroups.map(g => g.topicName));
     
     // Find matching topic (case-insensitive)
     const matchingGroup = topicGroups.find(
@@ -83,15 +81,12 @@ export default function LibraryScreen() {
     );
     
     if (matchingGroup) {
-      console.log('Found matching group:', matchingGroup.topicName);
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
       setTopicGroups(prev => prev.map(group => ({
         ...group,
         isExpanded: group.topicName.toLowerCase() === decodedTopic.toLowerCase(),
       })));
       lastExpandedRef.current = expandTopic;
-    } else {
-      console.log('No matching group found for:', decodedTopic);
     }
   }, [expandTopic, topicGroups]);
 
@@ -341,7 +336,7 @@ const styles = StyleSheet.create({
   inner: {
     paddingHorizontal: 20,
     paddingVertical: 24,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   heading: {
     fontSize: 30,

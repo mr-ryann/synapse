@@ -17,35 +17,30 @@ export const BottomTabBar = React.memo<BottomTabBarProps>(({ state, navigation }
   const insets = useSafeAreaInsets();
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          paddingBottom: insets.bottom,
-        },
-      ]}
-    >
-      {state.routes.map((route, index) => {
-        const tabConfig = TABS.find(t => t.routeName === route.name);
-        if (!tabConfig) return null;
+    <View style={[styles.outerContainer, { paddingBottom: insets.bottom + 8 }]}>
+      <View style={styles.pillContainer}>
+        {state.routes.map((route, index) => {
+          const tabConfig = TABS.find(t => t.routeName === route.name);
+          if (!tabConfig) return null;
 
-        const isActive = state.index === index;
-        const onPress = () => {
-          if (!isActive) {
-            navigation.navigate(route.name);
-          }
-        };
-          
-        return (
-          <TabButton
-            key={route.key}
-            icon={tabConfig.icon}
-            label={tabConfig.label}
-            isActive={isActive}
-            onPress={onPress}
-          />
-        );
-      })}
+          const isActive = state.index === index;
+          const onPress = () => {
+            if (!isActive) {
+              navigation.navigate(route.name);
+            }
+          };
+            
+          return (
+            <TabButton
+              key={route.key}
+              icon={tabConfig.icon}
+              label={tabConfig.label}
+              isActive={isActive}
+              onPress={onPress}
+            />
+          );
+        })}
+      </View>
     </View>
   );
 });
@@ -53,16 +48,26 @@ export const BottomTabBar = React.memo<BottomTabBarProps>(({ state, navigation }
 BottomTabBar.displayName = 'BottomTabBar';
 
 const styles = StyleSheet.create({
-  container: {
+  outerContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    paddingHorizontal: 20,
+  },
+  pillContainer: {
     flexDirection: 'row',
     backgroundColor: COLORS.background.secondary,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border.default,
-    paddingTop: 12,
-    shadowColor: COLORS.overlay.glow,
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 12,
+    borderRadius: 32,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border.subtle,
   },
 });

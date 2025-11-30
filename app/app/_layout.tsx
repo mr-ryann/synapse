@@ -3,8 +3,8 @@ import { Stack, useRouter, useSegments, useRootNavigationState, usePathname } fr
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
-import { useFonts, Anton_400Regular } from '@expo-google-fonts/anton';
-import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold } from '@expo-google-fonts/inter';
+import { useFonts, Oswald_400Regular } from '@expo-google-fonts/oswald';
+import { Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold, Outfit_800ExtraBold } from '@expo-google-fonts/outfit';
 import * as SplashScreen from 'expo-splash-screen';
 import { useUserStore } from '../stores/useUserStore';
 import { TopHeader } from '../components/navigation/TopHeader';
@@ -35,11 +35,11 @@ export default function RootLayout() {
   
   // Load Google Fonts
   const [fontsLoaded] = useFonts({
-    Anton_400Regular,
-    Inter_400Regular,
-    Inter_500Medium,
-    Inter_600SemiBold,
-    Inter_700Bold,
+    Oswald_400Regular,
+    Outfit_500Medium,
+    Outfit_600SemiBold,
+    Outfit_700Bold,
+    Outfit_800ExtraBold,
   });
   
   // Hide splash screen once fonts are loaded

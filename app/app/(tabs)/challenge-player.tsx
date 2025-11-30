@@ -114,9 +114,6 @@ export default function ChallengePlayer() {
           challengeId
         );
         
-        console.log('Challenge loaded from library:', JSON.stringify(challengeDoc, null, 2));
-        console.log('Questions field:', challengeDoc.questions);
-        
         const challengeData: Challenge = {
           id: challengeDoc.$id,
           title: challengeDoc.title || challengeDoc.topicName,
@@ -128,8 +125,6 @@ export default function ChallengePlayer() {
           archetype: challengeDoc.archetype,
           mutator: challengeDoc.mutator,
         };
-        
-        console.log('Questions to set:', challengeDoc.questions?.length || 0);
         
         setCurrentChallenge(challengeData);
         setAllQuestions(challengeDoc.questions || []);
@@ -253,19 +248,10 @@ export default function ChallengePlayer() {
    * Collects responses locally and submits all at once when challenge is complete
    */
   const handleNextQuestion = async () => {
-    console.log('handleNextQuestion called');
-    console.log('currentChallenge:', currentChallenge);
-    console.log('user:', user?.$id);
-    console.log('responseText:', responseText?.trim()?.length);
-    console.log('allQuestions:', allQuestions);
-    console.log('allQuestions.length:', allQuestions.length);
-    
     if (!currentChallenge || !user || !responseText.trim()) {
-      console.log('Early return: missing currentChallenge, user, or responseText');
       return;
     }
     if (allQuestions.length === 0) {
-      console.log('Early return: allQuestions is empty');
       return;
     }
 
@@ -290,20 +276,12 @@ export default function ChallengePlayer() {
       try {
         const totalThinkingTime = updatedResponses.reduce((sum, r) => sum + r.thinkingTime, 0);
         
-        // Debug logging
-        console.log('=== SUBMIT CHALLENGE DEBUG ===');
-        console.log('user.$id:', user.$id);
-        console.log('currentChallenge:', JSON.stringify(currentChallenge, null, 2));
-        console.log('currentChallenge.id:', currentChallenge.id);
-        console.log('typeof currentChallenge.id:', typeof currentChallenge.id);
-        
         const payload = {
           userId: user.$id,
           challengeId: currentChallenge.id,
           responses: updatedResponses,
           totalThinkingTime: totalThinkingTime,
         };
-        console.log('Payload being sent:', JSON.stringify(payload, null, 2));
         
         const execution = await functions.createExecution(
           'submit-challenge',
@@ -472,12 +450,14 @@ export default function ChallengePlayer() {
             )}
           </View>
 
-          {/* Hidden Thinking Timer - runs in background */}
-          <ThinkingTimer
-            isActive={isThinking}
-            time={thinkingTime}
-            onTimeUpdate={setThinkingTime}
-          />
+          {/* Hidden Thinking Timer - runs in background, not visible */}
+          <View style={{ position: 'absolute', opacity: 0, pointerEvents: 'none' }}>
+            <ThinkingTimer
+              isActive={isThinking}
+              time={thinkingTime}
+              onTimeUpdate={setThinkingTime}
+            />
+          </View>
 
           {/* Compact Text Input - Expands on click */}
           <Pressable 
@@ -617,8 +597,8 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 48,
+    paddingTop: 0,
+    paddingBottom: 100,
   },
   section: {
     marginBottom: 24,

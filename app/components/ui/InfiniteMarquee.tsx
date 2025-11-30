@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useCallback, useState } from 'react';
-import { View, Text, StyleSheet, Animated, Easing, ViewStyle, TouchableOpacity, LayoutChangeEvent, PanResponder } from 'react-native';
+import { View, Text, StyleSheet, Animated, Easing, ViewStyle, TouchableOpacity, LayoutChangeEvent } from 'react-native';
 import { useRouter } from 'expo-router';
 import { FONTS } from '../../theme';
 
 interface InfiniteMarqueeProps {
   items: string[];
-  speed?: number;
+  speed?: number; // pixels per second
   reverse?: boolean;
   fontSize?: number;
   style?: ViewStyle;
@@ -14,7 +14,7 @@ interface InfiniteMarqueeProps {
 
 export const InfiniteMarquee = React.memo<InfiniteMarqueeProps>(({
   items,
-  speed = 30000,
+  speed = 50, // 50 pixels per second (slow, smooth scroll)
   reverse = false,
   fontSize = 16,
   style,
@@ -23,10 +23,7 @@ export const InfiniteMarquee = React.memo<InfiniteMarqueeProps>(({
   const router = useRouter();
   const animatedValue = useRef(new Animated.Value(0)).current;
   const [singleSetWidth, setSingleSetWidth] = useState(0);
-  const currentPosition = useRef(0);
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
-  const isDragging = useRef(false);
-  const dragStartPosition = useRef(0);
 
   // Duplicate items twice for seamless infinite loop
   const duplicatedItems = [...items, ...items];
@@ -48,162 +45,52 @@ export const InfiniteMarquee = React.memo<InfiniteMarqueeProps>(({
     }
   }, []);
 
-  // Start continuous infinite scroll animation
+  // Start continuous infinite scroll animation - smooth, no jerks
   const startInfiniteScroll = useCallback(() => {
-    if (singleSetWidth <= 0 || isDragging.current) return;
+    if (singleSetWidth <= 0) return;
 
-    const startPos = currentPosition.current;
+    const startPos = reverse ? -singleSetWidth : 0;
+    const endPos = reverse ? 0 : -singleSetWidth;
     
-    // For normal direction: scroll from 0 to -singleSetWidth
-    // For reverse direction: scroll from -singleSetWidth to 0
-    const targetPos = reverse ? 0 : -singleSetWidth;
-    
-    // Calculate remaining distance for proportional timing
-    const totalDistance = singleSetWidth;
-    const remainingDistance = Math.abs(targetPos - startPos);
-    const duration = (remainingDistance / totalDistance) * speed;
+    // Calculate duration based on width and speed (pixels per second)
+    // This ensures consistent scroll speed regardless of content width
+    const duration = (singleSetWidth / speed) * 1000; // Convert to milliseconds
 
-    if (duration < 50) {
-      // Already at target, reset and restart
-      const resetPos = reverse ? -singleSetWidth : 0;
-      currentPosition.current = resetPos;
-      animatedValue.setValue(resetPos);
-      // Use requestAnimationFrame for smoother restart
-      requestAnimationFrame(() => {
-        if (!isDragging.current) {
-          startInfiniteScroll();
+    // Reset to start position
+    animatedValue.setValue(startPos);
+
+    // Create seamless looping animation
+    const animate = () => {
+      animatedValue.setValue(startPos);
+      
+      animationRef.current = Animated.timing(animatedValue, {
+        toValue: endPos,
+        duration: duration,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      });
+
+      animationRef.current.start(({ finished }) => {
+        if (finished) {
+          // Seamlessly loop - no delay, no jerk
+          animate();
         }
       });
-      return;
-    }
-
-    animationRef.current = Animated.timing(animatedValue, {
-      toValue: targetPos,
-      duration: duration,
-      easing: Easing.linear,
-      useNativeDriver: true,
-    });
-
-    animationRef.current.start(({ finished }) => {
-      if (finished && !isDragging.current) {
-        // Seamlessly reset to the beginning
-        const resetPos = reverse ? -singleSetWidth : 0;
-        currentPosition.current = resetPos;
-        animatedValue.setValue(resetPos);
-        // Immediately continue - no delay for seamless loop
-        requestAnimationFrame(() => {
-          if (!isDragging.current) {
-            startInfiniteScroll();
-          }
-        });
-      }
-    });
-  }, [singleSetWidth, speed, reverse, animatedValue]);
-
-  // Track animated value position
-  useEffect(() => {
-    const listenerId = animatedValue.addListener(({ value }) => {
-      currentPosition.current = value;
-    });
-    return () => {
-      animatedValue.removeListener(listenerId);
     };
-  }, [animatedValue]);
+
+    animate();
+  }, [singleSetWidth, speed, reverse, animatedValue]);
 
   // Start animation when width is measured
   useEffect(() => {
-    if (singleSetWidth > 0 && !isDragging.current) {
-      // Set initial position
-      const initialPos = reverse ? -singleSetWidth : 0;
-      currentPosition.current = initialPos;
-      animatedValue.setValue(initialPos);
-      
-      // Start scrolling
-      const timer = setTimeout(() => {
-        startInfiniteScroll();
-      }, 100);
+    if (singleSetWidth > 0) {
+      startInfiniteScroll();
       
       return () => {
-        clearTimeout(timer);
         stopAnimation();
       };
     }
-  }, [singleSetWidth, reverse, startInfiniteScroll, stopAnimation, animatedValue]);
-
-  // Pan responder for manual dragging
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      onMoveShouldSetPanResponder: (_, gestureState) => {
-        return Math.abs(gestureState.dx) > Math.abs(gestureState.dy) && Math.abs(gestureState.dx) > 8;
-      },
-      onPanResponderGrant: () => {
-        isDragging.current = true;
-        stopAnimation();
-        dragStartPosition.current = currentPosition.current;
-      },
-      onPanResponderMove: (_, gestureState) => {
-        let newPosition = dragStartPosition.current + gestureState.dx;
-        
-        // Wrap position for infinite feel
-        if (singleSetWidth > 0) {
-          while (newPosition > 0) {
-            newPosition -= singleSetWidth;
-            dragStartPosition.current -= singleSetWidth;
-          }
-          while (newPosition < -singleSetWidth) {
-            newPosition += singleSetWidth;
-            dragStartPosition.current += singleSetWidth;
-          }
-        }
-        
-        currentPosition.current = newPosition;
-        animatedValue.setValue(newPosition);
-      },
-      onPanResponderRelease: (_, gestureState) => {
-        isDragging.current = false;
-        
-        // Apply momentum
-        const velocity = gestureState.vx;
-        const momentumDistance = velocity * 150;
-        let targetPosition = currentPosition.current + momentumDistance;
-        
-        // Normalize position
-        if (singleSetWidth > 0) {
-          while (targetPosition > 0) {
-            targetPosition -= singleSetWidth;
-          }
-          while (targetPosition < -singleSetWidth) {
-            targetPosition += singleSetWidth;
-          }
-        }
-        
-        Animated.timing(animatedValue, {
-          toValue: targetPosition,
-          duration: 250,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }).start(({ finished }) => {
-          if (finished) {
-            currentPosition.current = targetPosition;
-            setTimeout(() => {
-              if (!isDragging.current) {
-                startInfiniteScroll();
-              }
-            }, 800);
-          }
-        });
-      },
-      onPanResponderTerminate: () => {
-        isDragging.current = false;
-        setTimeout(() => {
-          if (!isDragging.current) {
-            startInfiniteScroll();
-          }
-        }, 300);
-      },
-    })
-  ).current;
+  }, [singleSetWidth, startInfiniteScroll, stopAnimation]);
 
   // Measure single set width
   const onContentLayout = useCallback((event: LayoutChangeEvent) => {
@@ -224,7 +111,7 @@ export const InfiniteMarquee = React.memo<InfiniteMarqueeProps>(({
 
   return (
     // @ts-expect-error - React 19 type compatibility issue with RN
-    <View style={[styles.container, style]} {...panResponder.panHandlers}>
+    <View style={[styles.container, style]}>
       <Animated.View
         style={[
           styles.scrollContent,

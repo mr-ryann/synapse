@@ -54,17 +54,15 @@ export default function HomeScreen() {
       if (topicsRes.documents.length > 0) {
         const topicNames = topicsRes.documents.map((doc: any) => doc.name);
         setTopics(topicNames);
-        console.log('Fetched topics:', topicNames);
       }
     } catch (err) {
-      console.log('Error fetching topics, using fallback:', err);
+      // Fallback if topics fetch fails
     }
   };
 
   const fetchHomeData = async () => {
     try {
       setLoading(true);
-      console.log('Fetching home data for user:', user?.$id);
 
       // Check for in-progress challenge
       try {
@@ -83,21 +81,17 @@ export default function HomeScreen() {
           setInProgressChallenge(challengeDoc);
         }
       } catch (err) {
-        console.log('No in-progress challenge or error:', err);
+        // No in-progress challenge
       }
 
       // Fetch recommended challenge from function
       try {
-        console.log('Calling getChallengeForUser function...');
         const execution = await functions.createExecution(
           'getChallengeForUser',
           JSON.stringify({ userId: user?.$id, mode: 'recommended' })
         );
         
-        console.log('Function response:', execution.responseBody);
-        
         if (!execution.responseBody || execution.responseBody.trim() === '') {
-          console.log('Empty response from function, trying direct database fetch...');
           throw new Error('Empty response');
         }
         
@@ -114,7 +108,6 @@ export default function HomeScreen() {
             estimatedTime: result.data.estimatedTime,
             difficulty: result.data.difficulty,
           };
-          console.log('Challenge data:', challengeData);
           setDailyProvocation(challengeData);
           
           // Check if user has already completed this challenge
@@ -125,17 +118,14 @@ export default function HomeScreen() {
               `${user?.$id}_${result.data.id}`
             );
             setIsCompleted(true);
-            console.log('Challenge already completed');
           } catch {
             // Not completed
             setIsCompleted(false);
           }
         } else {
-          console.log('Function returned error:', result.error);
           throw new Error(result.error);
         }
       } catch (err) {
-        console.log('Function failed, fetching directly from database:', err);
         // Fallback: fetch a random challenge directly from database
         try {
           const challengesRes = await databases.listDocuments(
@@ -147,7 +137,6 @@ export default function HomeScreen() {
           if (challengesRes.documents.length > 0) {
             const randomIndex = Math.floor(Math.random() * challengesRes.documents.length);
             const challenge = challengesRes.documents[randomIndex];
-            console.log('Fetched challenge from DB:', challenge);
             
             const challengeData = {
               $id: challenge.$id,
@@ -173,12 +162,12 @@ export default function HomeScreen() {
             }
           }
         } catch (dbErr) {
-          console.log('Direct database fetch also failed:', dbErr);
+          // Direct database fetch also failed
         }
       }
 
     } catch (error) {
-      console.log('Error fetching home data:', error);
+      // Error fetching home data
     } finally {
       setLoading(false);
     }
@@ -268,14 +257,14 @@ export default function HomeScreen() {
               {/* Row 1 - Normal speed, left */}
               <InfiniteMarquee
                 items={topics.slice(0, Math.ceil(topics.length / 2))}
-                speed={18}
+                speed={8}
                 reverse={false}
                 fontSize={12}
               />
               {/* Row 2 - Slower, right (reverse) */}
               <InfiniteMarquee
                 items={topics.slice(Math.ceil(topics.length / 2))}
-                speed={15}
+                speed={8}
                 reverse={true}
                 fontSize={12}
               />
@@ -321,6 +310,7 @@ const styles = StyleSheet.create({
   discoverySection: {
     flex: 0.45,
     paddingTop: 0,
+    paddingBottom: 80,
   },
   statsContainer: {
     flexDirection: 'row',

@@ -233,7 +233,7 @@ const styles = StyleSheet.create({
   inner: {
     paddingHorizontal: 20,
     paddingVertical: 24,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   heading: {
     fontSize: 30,

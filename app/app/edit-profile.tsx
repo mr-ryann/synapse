@@ -47,7 +47,6 @@ export default function EditProfile() {
         await databases.updateDocument('synapse', 'users', user.$id, { bio });
       } catch (e) {
         // If bio field doesn't exist, we'll need to add it to schema first
-        console.log('Could not update bio:', e);
       }
       
       Alert.alert('Success', 'Profile updated successfully!');

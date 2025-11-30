@@ -1,10 +1,10 @@
 export const FONTS = {
-  brand: 'Anton_400Regular',
-  heading: 'Anton_400Regular',
-  body: 'Inter_400Regular',
-  bodyMedium: 'Inter_500Medium',
-  bodySemiBold: 'Inter_600SemiBold',
-  bodyBold: 'Inter_700Bold',
+  brand: 'Oswald_400Regular',
+  heading: 'Oswald_400Regular',
+  body: 'Outfit_500Medium',
+  bodyMedium: 'Outfit_600SemiBold',
+  bodySemiBold: 'Outfit_700Bold',
+  bodyBold: 'Outfit_800ExtraBold',
 };
 
 export const FONT_WEIGHTS = {
