@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Home, BookOpen, NotebookPen, User } from 'lucide-react-native';
+import { Home, Library, NotebookPen, User } from 'lucide-react-native';
 import { TabButton } from './TabButton';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS } from '../../theme';
@@ -8,7 +8,7 @@ import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 const TABS = [
   { name: 'home', icon: Home, routeName: 'home', label: 'Home' },
-  { name: 'library', icon: BookOpen, routeName: 'library', label: 'Library' },
+  { name: 'library', icon: Library, routeName: 'library', label: 'Library' },
   { name: 'journal', icon: NotebookPen, routeName: 'journal', label: 'Journal' },
   { name: 'profile', icon: User, routeName: 'profile', label: 'Profile' },
 ] as const;
@@ -59,9 +59,9 @@ const styles = StyleSheet.create({
   pillContainer: {
     flexDirection: 'row',
     backgroundColor: COLORS.background.secondary,
-    borderRadius: 32,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    borderRadius: 40,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,

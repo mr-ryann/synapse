@@ -21,7 +21,7 @@ export const Logo = React.memo<LogoProps>(({ size = 'medium', showText = true })
     <View style={[styles.container, { gap: dimensions.gap }]}>
       <Waypoints size={dimensions.icon} color={COLORS.accent.primary} strokeWidth={2} />
       {showText && (
-        <Text style={[styles.brand, { fontSize: dimensions.text }]}>SYNAPSE</Text>
+        <Text style={[styles.brand, { fontSize: dimensions.text, fontFamily: 'Oswald_400Regular' }]}>SYNAPSE</Text>
       )}
     </View>
   );

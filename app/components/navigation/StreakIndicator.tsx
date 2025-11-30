@@ -6,9 +6,7 @@ import { COLORS, FONTS } from '../../theme';
 
 export const StreakIndicator = React.memo(() => {
   const user = useUserStore((state) => state.user);
-  const currentStreak = user?.currentStreak ?? 0;
-
-  if (currentStreak === 0) return null;
+  const currentStreak = user?.streak ?? user?.currentStreak ?? 0;
 
   return (
     <View style={styles.container}>

@@ -257,14 +257,14 @@ export default function HomeScreen() {
               {/* Row 1 - Normal speed, left */}
               <InfiniteMarquee
                 items={topics.slice(0, Math.ceil(topics.length / 2))}
-                speed={8}
+                speed={25}
                 reverse={false}
                 fontSize={12}
               />
               {/* Row 2 - Slower, right (reverse) */}
               <InfiniteMarquee
                 items={topics.slice(Math.ceil(topics.length / 2))}
-                speed={8}
+                speed={20}
                 reverse={true}
                 fontSize={12}
               />
@@ -354,7 +354,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     alignSelf: 'flex-start',
     marginLeft: 16,
-    marginBottom: 12,
+    marginBottom: 20,
     gap: 8,
   },
   discoverLabel: {

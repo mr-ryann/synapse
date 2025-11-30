@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { COLORS, FONTS } from '../../theme';
 
 interface ActivityGraphProps {
@@ -8,7 +8,7 @@ interface ActivityGraphProps {
 }
 
 const ActivityGraph: React.FC<ActivityGraphProps> = ({ data, weeks = 15 }) => {
-  const { grid, maxCount } = useMemo(() => {
+  const { grid, maxCount, monthLabels } = useMemo(() => {
     const today = new Date();
     const totalDays = weeks * 7;
     const startDate = new Date(today);
@@ -34,6 +34,10 @@ const ActivityGraph: React.FC<ActivityGraphProps> = ({ data, weeks = 15 }) => {
       gridData.push([]);
     }
 
+    // Track months for labels
+    const months: Array<{ label: string; colIndex: number }> = [];
+    let lastMonth = -1;
+
     // Fill the grid
     const currentDate = new Date(startDate);
     for (let w = 0; w < weeks; w++) {
@@ -42,12 +46,22 @@ const ActivityGraph: React.FC<ActivityGraphProps> = ({ data, weeks = 15 }) => {
         const dayOfWeek = currentDate.getDay();
         const count = dateCountMap[dateStr] || 0;
         
+        // Track month changes (only on first day of week to avoid duplicates)
+        if (d === 0) {
+          const month = currentDate.getMonth();
+          if (month !== lastMonth) {
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            months.push({ label: monthNames[month], colIndex: w });
+            lastMonth = month;
+          }
+        }
+        
         gridData[dayOfWeek].push({ date: dateStr, count });
         currentDate.setDate(currentDate.getDate() + 1);
       }
     }
 
-    return { grid: gridData, maxCount: max || 1 };
+    return { grid: gridData, maxCount: max || 1, monthLabels: months };
   }, [data, weeks]);
 
   const getIntensityColor = (count: number) => {
@@ -59,16 +73,34 @@ const ActivityGraph: React.FC<ActivityGraphProps> = ({ data, weeks = 15 }) => {
     return COLORS.accent.secondary;
   };
 
-  const dayLabels = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   return (
     <View style={styles.container}>
+      {/* Month labels */}
+      <View style={styles.monthLabelsContainer}>
+        <View style={styles.dayLabelSpacer} />
+        <View style={styles.monthLabels}>
+          {monthLabels.map((month, index) => (
+            <Text
+              key={index}
+              style={[
+                styles.monthLabel,
+                { left: month.colIndex * 15 },
+              ]}
+            >
+              {month.label}
+            </Text>
+          ))}
+        </View>
+      </View>
+      
       <View style={styles.graphContainer}>
         {/* Day labels */}
         <View style={styles.dayLabels}>
           {dayLabels.map((label, index) => (
             <Text key={index} style={styles.dayLabel}>
-              {index % 2 === 1 ? label : ''}
+              {index % 2 === 0 ? label : ''}
             </Text>
           ))}
         </View>
@@ -115,15 +147,35 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border.default,
   },
+  monthLabelsContainer: {
+    flexDirection: 'row',
+    marginBottom: 8,
+  },
+  dayLabelSpacer: {
+    width: 32,
+  },
+  monthLabels: {
+    flex: 1,
+    flexDirection: 'row',
+    position: 'relative',
+    height: 16,
+  },
+  monthLabel: {
+    position: 'absolute',
+    fontSize: 10,
+    fontFamily: FONTS.body,
+    color: COLORS.text.muted,
+  },
   graphContainer: {
     flexDirection: 'row',
   },
   dayLabels: {
     marginRight: 8,
     justifyContent: 'space-around',
+    width: 24,
   },
   dayLabel: {
-    fontSize: 10,
+    fontSize: 9,
     fontFamily: FONTS.body,
     color: COLORS.text.muted,
     height: 12,

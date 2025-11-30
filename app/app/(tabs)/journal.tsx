@@ -46,17 +46,55 @@ export default function JournalScreen() {
         ]
       );
 
-      // Map responses to journal entries
-      const journalEntries: JournalEntry[] = responsesRes.documents.map((doc: any) => ({
-        $id: doc.$id,
-        challengeId: doc.challengeID || doc.challengeId || '',
-        challengeTitle: doc.challengeTitle || 'Challenge',
-        topicName: doc.topicName || 'General',
-        completedAt: doc.completedAt || doc.$createdAt,
-        thinkingTime: doc.totalThinkingTime || doc.thinkingTime || 0,
-        xpEarned: doc.totalXpEarned || doc.xpEarned || 0,
-        difficulty: doc.difficulty || 1,
-      }));
+      // Get unique challenge IDs to fetch challenge details
+      const challengeIds = [...new Set(
+        responsesRes.documents
+          .map((doc: any) => doc.challengeID || doc.challengeId)
+          .filter(Boolean)
+      )];
+
+      // Fetch challenge details for all unique challenges
+      const challengeDetailsMap: Record<string, { title: string; topicName: string; difficulty: number }> = {};
+      
+      // Fetch challenges in batches (Appwrite limit)
+      for (const challengeId of challengeIds) {
+        try {
+          const challenge = await databases.getDocument('synapse', 'challenges', challengeId as string);
+          challengeDetailsMap[challengeId as string] = {
+            title: challenge.title || challenge.topicName || 'Challenge',
+            topicName: challenge.topicName || 'General',
+            difficulty: challenge.difficulty || 1,
+          };
+        } catch {
+          // Challenge may have been deleted
+          challengeDetailsMap[challengeId as string] = {
+            title: 'Challenge',
+            topicName: 'General',
+            difficulty: 1,
+          };
+        }
+      }
+
+      // Map responses to journal entries with real challenge names
+      const journalEntries: JournalEntry[] = responsesRes.documents.map((doc: any) => {
+        const challengeId = doc.challengeID || doc.challengeId || '';
+        const challengeDetails = challengeDetailsMap[challengeId] || {
+          title: 'Challenge',
+          topicName: 'General',
+          difficulty: 1,
+        };
+        
+        return {
+          $id: doc.$id,
+          challengeId: challengeId,
+          challengeTitle: challengeDetails.title,
+          topicName: challengeDetails.topicName,
+          completedAt: doc.completedAt || doc.$createdAt,
+          thinkingTime: doc.totalThinkingTime || doc.thinkingTime || 0,
+          xpEarned: doc.totalXpEarned || doc.xpEarned || 0,
+          difficulty: challengeDetails.difficulty,
+        };
+      });
 
       setEntries(journalEntries);
     } catch (error) {

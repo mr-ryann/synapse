@@ -23,7 +23,6 @@ import { Lightbulb, Send, X, PenLine } from 'lucide-react-native';
 import { databases, functions, account } from '../../lib/appwrite';
 import { useChallengeStore } from '../../stores/useChallengeStore';
 import { useUserStore } from '../../stores/useUserStore';
-import { AppHeader } from '../../components/navigation/AppHeader';
 import { ThinkingTimer } from '../../components/challenge/ThinkingTimer';
 import { HintModal } from '../../components/challenge/HintModal';
 import { COLORS, FONTS } from '../../theme';
@@ -386,12 +385,6 @@ export default function ChallengePlayer() {
 
   return (
     <View style={styles.container}>
-      <AppHeader 
-        showBackButton={true}
-        title={currentChallenge.title}
-        subtitle={currentChallenge.topic}
-      />
-      
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
@@ -405,6 +398,12 @@ export default function ChallengePlayer() {
           onScroll={handleScroll}
           scrollEventThrottle={16}
         >
+          {/* Challenge Title & Topic - Left aligned above nodes */}
+          <View style={styles.challengeHeaderSection}>
+            <Text style={styles.challengeTitle}>{currentChallenge.title}</Text>
+            <Text style={styles.challengeTopic}>{currentChallenge.topic}</Text>
+          </View>
+
           {/* Node Progress Indicator - Jagged Pulse Style */}
           {allQuestions.length > 0 && (
             <View style={styles.nodeProgressContainer}>
@@ -667,6 +666,24 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     color: COLORS.text.muted,
     marginTop: 8,
+  },
+  challengeHeaderSection: {
+    marginBottom: 24,
+    paddingTop: 20,
+  },
+  challengeTitle: {
+    fontSize: 26,
+    fontFamily: FONTS.heading,
+    color: COLORS.text.primary,
+    letterSpacing: 0.5,
+    marginBottom: 4,
+  },
+  challengeTopic: {
+    fontSize: 14,
+    fontFamily: FONTS.body,
+    color: COLORS.text.secondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   questionText: {
     fontSize: 18,

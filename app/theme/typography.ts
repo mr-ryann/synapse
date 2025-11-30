@@ -1,10 +1,10 @@
 export const FONTS = {
   brand: 'Oswald_400Regular',
   heading: 'Oswald_400Regular',
-  body: 'Outfit_500Medium',
-  bodyMedium: 'Outfit_600SemiBold',
-  bodySemiBold: 'Outfit_700Bold',
-  bodyBold: 'Outfit_800ExtraBold',
+  body: 'Rubik_500Medium',
+  bodyMedium: 'Rubik_600SemiBold',
+  bodySemiBold: 'Rubik_700Bold',
+  bodyBold: 'Rubik_800ExtraBold',
 };
 
 export const FONT_WEIGHTS = {

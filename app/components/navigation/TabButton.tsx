@@ -36,22 +36,23 @@ export const TabButton = React.memo<TabButtonProps>(({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        paddingVertical: 12,
+        paddingVertical: 10,
       }}
     >
       <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
         <Icon
-          size={24}
+          size={22}
           color={isActive ? COLORS.accent.primary : COLORS.text.secondary}
         />
       </Animated.View>
       <Text
         style={{
-          fontSize: 12,
-          marginTop: 4,
+          fontSize: 11,
+          marginTop: 6,
           color: isActive ? COLORS.accent.primary : COLORS.text.secondary,
-          fontFamily: FONTS.body,
-          fontWeight: isActive ? '600' : '400',
+          fontFamily: FONTS.heading,
+          letterSpacing: 0.5,
+          textTransform: 'uppercase',
         }}
       >
         {label}

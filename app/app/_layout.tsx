@@ -4,7 +4,7 @@ import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { useFonts, Oswald_400Regular } from '@expo-google-fonts/oswald';
-import { Outfit_500Medium, Outfit_600SemiBold, Outfit_700Bold, Outfit_800ExtraBold } from '@expo-google-fonts/outfit';
+import { Rubik_500Medium, Rubik_600SemiBold, Rubik_700Bold, Rubik_800ExtraBold } from '@expo-google-fonts/rubik';
 import * as SplashScreen from 'expo-splash-screen';
 import { useUserStore } from '../stores/useUserStore';
 import { TopHeader } from '../components/navigation/TopHeader';
@@ -36,10 +36,10 @@ export default function RootLayout() {
   // Load Google Fonts
   const [fontsLoaded] = useFonts({
     Oswald_400Regular,
-    Outfit_500Medium,
-    Outfit_600SemiBold,
-    Outfit_700Bold,
-    Outfit_800ExtraBold,
+    Rubik_500Medium,
+    Rubik_600SemiBold,
+    Rubik_700Bold,
+    Rubik_800ExtraBold,
   });
   
   // Hide splash screen once fonts are loaded

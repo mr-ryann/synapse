@@ -59,26 +59,18 @@ export const InfiniteMarquee = React.memo<InfiniteMarqueeProps>(({
     // Reset to start position
     animatedValue.setValue(startPos);
 
-    // Create seamless looping animation
-    const animate = () => {
-      animatedValue.setValue(startPos);
-      
-      animationRef.current = Animated.timing(animatedValue, {
+    // Use Animated.loop for truly seamless infinite animation
+    animationRef.current = Animated.loop(
+      Animated.timing(animatedValue, {
         toValue: endPos,
         duration: duration,
         easing: Easing.linear,
         useNativeDriver: true,
-      });
+      }),
+      { resetBeforeIteration: true }
+    );
 
-      animationRef.current.start(({ finished }) => {
-        if (finished) {
-          // Seamlessly loop - no delay, no jerk
-          animate();
-        }
-      });
-    };
-
-    animate();
+    animationRef.current.start();
   }, [singleSetWidth, speed, reverse, animatedValue]);
 
   // Start animation when width is measured
