@@ -6,7 +6,7 @@ import { useUserStore } from '../../stores/useUserStore';
 import { databases } from '../../lib/appwrite';
 import { Query } from 'react-native-appwrite';
 import { COLORS, FONTS } from '../../theme';
-import { AnalyticsGraph } from '../../components/ui/AnalyticsGraph';
+import { AdvancedAnalytics } from '../../components/ui/AdvancedAnalytics';
 import { useAnalytics } from '../../hooks/useAnalytics';
 
 interface JournalEntry {
@@ -18,6 +18,15 @@ interface JournalEntry {
   thinkingTime: number;
   xpEarned: number;
   difficulty: number;
+  thinkingTimes?: number[]; // Array of times per question
+}
+
+// Response data for advanced analytics
+interface ResponseData {
+  thinkingTime: number;
+  xpEarned: number;
+  topicName: string;
+  thinkingTimes?: number[];
 }
 
 export default function JournalScreen() {
@@ -99,6 +108,7 @@ export default function JournalScreen() {
           thinkingTime: doc.totalThinkingTime || doc.thinkingTime || 0,
           xpEarned: doc.totalXpEarned || doc.xpEarned || 0,
           difficulty: challengeDetails.difficulty,
+          thinkingTimes: doc.thinkingTimes || [],
         };
       });
 
@@ -175,18 +185,17 @@ export default function JournalScreen() {
           <Text style={styles.subtitle}>Your thinking journey</Text>
 
           {/* Analytics Graph - Replaces old stats row */}
-          {analytics && (
-            <AnalyticsGraph
-              data={analytics.activityData}
-              xp={analytics.xp}
+          {analytics && entries.length > 0 && (
+            <AdvancedAnalytics
+              responses={entries.map(e => ({
+                thinkingTime: e.thinkingTime,
+                xpEarned: e.xpEarned,
+                topicName: e.topicName,
+                thinkingTimes: e.thinkingTimes,
+              }))}
               level={analytics.level}
+              xp={analytics.xp}
               streak={analytics.currentStreak}
-              trend={analytics.trend}
-              xpProgress={analytics.xpProgress}
-              totalChallenges={analytics.totalChallenges}
-              averageThinkingTime={analytics.averageThinkingTime}
-              timeRange={timeRange}
-              onTimeRangeChange={setTimeRange}
             />
           )}
           
@@ -197,56 +206,73 @@ export default function JournalScreen() {
           )}
 
           {/* Section Header */}
-          <Text style={styles.sectionTitle}>Recent Activity</Text>
+          <Text style={styles.sectionTitle}>Traces</Text>
 
-          {/* Journal Entries */}
+          {/* Journal Entries with Timeline */}
           {entries.length > 0 ? (
-            Object.entries(groupedEntries).map(([dateStr, dayEntries]) => (
-              <View key={dateStr} style={styles.dateGroup}>
-                <View style={styles.dateHeader}>
-                  <Calendar size={16} color={COLORS.text.muted} />
-                  <Text style={styles.dateText}>{formatDate(dayEntries[0].completedAt)}</Text>
-                </View>
-                
-                {dayEntries.map((entry) => (
-                  <TouchableOpacity
-                    key={entry.$id}
-                    style={styles.entryCard}
-                    onPress={() => router.push(`/challenge-player?challengeId=${entry.challengeId}`)}
-                    activeOpacity={0.7}
-                  >
-                    <View style={styles.entryContent}>
-                      <Text style={styles.entryTitle} numberOfLines={2}>
-                        {entry.challengeTitle}
-                      </Text>
-                      <View style={styles.entryMeta}>
-                        <Text style={styles.entryTopic}>{entry.topicName}</Text>
-                        <View style={[
-                          styles.difficultyBadge,
-                          { backgroundColor: getDifficultyColor(entry.difficulty) + '20' }
-                        ]}>
-                          <Text style={[
-                            styles.difficultyText,
-                            { color: getDifficultyColor(entry.difficulty) }
-                          ]}>
-                            {getDifficultyLabel(entry.difficulty)}
+            <View style={styles.timelineContainer}>
+              {/* Vertical timeline line */}
+              <View style={styles.timelineLine} />
+              
+              {Object.entries(groupedEntries).map(([dateStr, dayEntries], groupIndex) => (
+                <View key={dateStr} style={styles.dateGroup}>
+                  {/* Date marker on timeline */}
+                  <View style={styles.dateMarker}>
+                    <View style={styles.dateMarkerDot} />
+                    <Text style={styles.dateText}>{formatDate(dayEntries[0].completedAt)}</Text>
+                  </View>
+                  
+                  {dayEntries.map((entry, entryIndex) => (
+                    <View key={entry.$id} style={styles.timelineEntry}>
+                      {/* Timeline connector dot */}
+                      <View style={styles.entryDot} />
+                      
+                      <TouchableOpacity
+                        style={styles.entryCard}
+                        onPress={() => router.push(`/challenge-player?challengeId=${entry.challengeId}`)}
+                        activeOpacity={0.7}
+                      >
+                        <View style={styles.entryContent}>
+                          <Text style={styles.entryTitle} numberOfLines={2}>
+                            {entry.challengeTitle}
                           </Text>
+                          <View style={styles.entryMeta}>
+                            <Text style={styles.entryTopic}>{entry.topicName}</Text>
+                            <View style={[
+                              styles.difficultyBadge,
+                              { backgroundColor: getDifficultyColor(entry.difficulty) + '20' }
+                            ]}>
+                              <Text style={[
+                                styles.difficultyText,
+                                { color: getDifficultyColor(entry.difficulty) }
+                              ]}>
+                                {getDifficultyLabel(entry.difficulty)}
+                              </Text>
+                            </View>
+                          </View>
+                          {/* Completed date inside card */}
+                          <Text style={styles.completedDate}>
+                            {new Date(entry.completedAt).toLocaleDateString('en-US', { 
+                              month: 'long', 
+                              day: 'numeric',
+                              year: 'numeric' 
+                            })}
+                          </Text>
+                          <View style={styles.entryStats}>
+                            <View style={styles.statItem}>
+                              <Clock size={12} color={COLORS.text.muted} />
+                              <Text style={styles.entryStat}>{formatTime(entry.thinkingTime)}</Text>
+                            </View>
+                            <Text style={styles.xpStat}>+{entry.xpEarned} XP</Text>
+                          </View>
                         </View>
-                      </View>
-                      <View style={styles.entryStats}>
-                        <Text style={styles.entryStat}>
-                          <Clock size={12} color={COLORS.text.muted} /> {formatTime(entry.thinkingTime)}
-                        </Text>
-                        <Text style={styles.entryStat}>
-                          +{entry.xpEarned} XP
-                        </Text>
-                      </View>
+                        <ChevronRight size={20} color={COLORS.text.muted} />
+                      </TouchableOpacity>
                     </View>
-                    <ChevronRight size={20} color={COLORS.text.muted} />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            ))
+                  ))}
+                </View>
+              ))}
+            </View>
           ) : (
             <View style={styles.emptyState}>
               <BookOpen size={48} color={COLORS.text.muted} />
@@ -321,31 +347,69 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     letterSpacing: 0.5,
   },
-  dateGroup: {
-    marginBottom: 20,
+  timelineContainer: {
+    position: 'relative',
+    paddingLeft: 20,
   },
-  dateHeader: {
+  timelineLine: {
+    position: 'absolute',
+    left: 6,
+    top: 8,
+    bottom: 20,
+    width: 2,
+    backgroundColor: COLORS.accent.primary + '40',
+    borderRadius: 1,
+  },
+  dateGroup: {
+    marginBottom: 16,
+  },
+  dateMarker: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
     marginBottom: 12,
-    paddingLeft: 4,
+    marginLeft: -20,
+  },
+  dateMarkerDot: {
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: COLORS.accent.primary,
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: COLORS.background.primary,
   },
   dateText: {
     fontSize: 14,
     fontFamily: FONTS.body,
     fontWeight: '600',
-    color: COLORS.text.muted,
+    color: COLORS.text.primary,
+  },
+  timelineEntry: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 10,
+    marginLeft: -20,
+  },
+  entryDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: COLORS.accent.secondary,
+    marginTop: 18,
+    marginRight: 12,
+    marginLeft: 3,
   },
   entryCard: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: COLORS.background.elevated,
     borderRadius: 14,
     padding: 14,
-    marginBottom: 10,
     borderWidth: 1,
     borderColor: COLORS.border.subtle,
+    borderLeftWidth: 3,
+    borderLeftColor: COLORS.accent.primary + '60',
   },
   entryContent: {
     flex: 1,
@@ -379,15 +443,32 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     fontWeight: '600',
   },
+  completedDate: {
+    fontSize: 11,
+    fontFamily: FONTS.body,
+    color: COLORS.text.muted,
+    marginBottom: 6,
+  },
   entryStats: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
   },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
   entryStat: {
     fontSize: 12,
     fontFamily: FONTS.body,
     color: COLORS.text.muted,
+  },
+  xpStat: {
+    fontSize: 12,
+    fontFamily: FONTS.body,
+    fontWeight: '600',
+    color: COLORS.accent.secondary,
   },
   emptyState: {
     alignItems: 'center',

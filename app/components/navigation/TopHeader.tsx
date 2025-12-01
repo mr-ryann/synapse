@@ -109,17 +109,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   leftSide: {
-    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
   },
   rightSide: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    justifyContent: 'flex-end',
+    gap: 4,
   },
   searchButton: {
     padding: 8,
+    marginRight: -8,
   },
   searchOverlay: {
     flex: 1,

@@ -34,9 +34,9 @@ const ActivityGraph: React.FC<ActivityGraphProps> = ({ data, weeks = 15 }) => {
       gridData.push([]);
     }
 
-    // Track months for labels
-    const months: Array<{ label: string; colIndex: number }> = [];
-    let lastMonth = -1;
+    // Track months for labels - use a Set to avoid duplicates
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const monthsMap = new Map<number, { label: string; colIndex: number }>();
 
     // Fill the grid
     const currentDate = new Date(startDate);
@@ -46,20 +46,20 @@ const ActivityGraph: React.FC<ActivityGraphProps> = ({ data, weeks = 15 }) => {
         const dayOfWeek = currentDate.getDay();
         const count = dateCountMap[dateStr] || 0;
         
-        // Track month changes (only on first day of week to avoid duplicates)
-        if (d === 0) {
-          const month = currentDate.getMonth();
-          if (month !== lastMonth) {
-            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            months.push({ label: monthNames[month], colIndex: w });
-            lastMonth = month;
-          }
+        // Track month at the start of each week (d === 0) or first occurrence of the month
+        const month = currentDate.getMonth();
+        if (!monthsMap.has(month)) {
+          // Record the first week where this month appears
+          monthsMap.set(month, { label: monthNames[month], colIndex: w });
         }
         
         gridData[dayOfWeek].push({ date: dateStr, count });
         currentDate.setDate(currentDate.getDate() + 1);
       }
     }
+
+    // Convert map to sorted array by column index
+    const months = Array.from(monthsMap.values()).sort((a, b) => a.colIndex - b.colIndex);
 
     return { grid: gridData, maxCount: max || 1, monthLabels: months };
   }, [data, weeks]);
