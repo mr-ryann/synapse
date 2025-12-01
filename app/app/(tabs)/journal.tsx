@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { BookOpen, Clock, Trophy, ChevronRight, Calendar } from 'lucide-react-native';
+import { BookOpen, Clock, ChevronRight, Calendar } from 'lucide-react-native';
 import { useUserStore } from '../../stores/useUserStore';
 import { databases } from '../../lib/appwrite';
 import { Query } from 'react-native-appwrite';
 import { COLORS, FONTS } from '../../theme';
+import { AnalyticsGraph } from '../../components/ui/AnalyticsGraph';
+import { useAnalytics } from '../../hooks/useAnalytics';
 
 interface JournalEntry {
   $id: string;
@@ -23,6 +25,10 @@ export default function JournalScreen() {
   const { user } = useUserStore();
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [loading, setLoading] = useState(true);
+  const [timeRange, setTimeRange] = useState<'7d' | '30d' | 'all'>('30d');
+  
+  // Use the unified analytics hook
+  const { analytics, loading: analyticsLoading } = useAnalytics(timeRange);
 
   useEffect(() => {
     if (user) {
@@ -168,28 +174,30 @@ export default function JournalScreen() {
           <Text style={styles.heading}>Journal</Text>
           <Text style={styles.subtitle}>Your thinking journey</Text>
 
-          {/* Stats Summary */}
-          <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Trophy size={20} color={COLORS.accent.primary} />
-              <Text style={styles.statValue}>{entries.length}</Text>
-              <Text style={styles.statLabel}>Completed</Text>
+          {/* Analytics Graph - Replaces old stats row */}
+          {analytics && (
+            <AnalyticsGraph
+              data={analytics.activityData}
+              xp={analytics.xp}
+              level={analytics.level}
+              streak={analytics.currentStreak}
+              trend={analytics.trend}
+              xpProgress={analytics.xpProgress}
+              totalChallenges={analytics.totalChallenges}
+              averageThinkingTime={analytics.averageThinkingTime}
+              timeRange={timeRange}
+              onTimeRangeChange={setTimeRange}
+            />
+          )}
+          
+          {analyticsLoading && !analytics && (
+            <View style={styles.graphPlaceholder}>
+              <ActivityIndicator size="small" color={COLORS.accent.primary} />
             </View>
-            <View style={styles.statItem}>
-              <Clock size={20} color={COLORS.accent.secondary} />
-              <Text style={styles.statValue}>
-                {formatTime(entries.reduce((sum, e) => sum + e.thinkingTime, 0))}
-              </Text>
-              <Text style={styles.statLabel}>Think Time</Text>
-            </View>
-            <View style={styles.statItem}>
-              <BookOpen size={20} color={COLORS.text.secondary} />
-              <Text style={styles.statValue}>
-                {entries.reduce((sum, e) => sum + e.xpEarned, 0)}
-              </Text>
-              <Text style={styles.statLabel}>XP Earned</Text>
-            </View>
-          </View>
+          )}
+
+          {/* Section Header */}
+          <Text style={styles.sectionTitle}>Recent Activity</Text>
 
           {/* Journal Entries */}
           {entries.length > 0 ? (
@@ -297,30 +305,21 @@ const styles = StyleSheet.create({
     fontFamily: FONTS.body,
     color: COLORS.text.secondary,
   },
-  statsRow: {
-    flexDirection: 'row',
-    backgroundColor: COLORS.background.elevated,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 24,
-    borderWidth: 1,
-    borderColor: COLORS.border.subtle,
-  },
-  statItem: {
-    flex: 1,
+  graphPlaceholder: {
+    height: 300,
+    backgroundColor: COLORS.background.secondary,
+    borderRadius: 20,
+    justifyContent: 'center',
     alignItems: 'center',
-    gap: 6,
+    marginBottom: 24,
   },
-  statValue: {
-    fontSize: 20,
+  sectionTitle: {
+    fontSize: 18,
     fontFamily: FONTS.heading,
-    fontWeight: 'bold',
     color: COLORS.text.primary,
-  },
-  statLabel: {
-    fontSize: 12,
-    fontFamily: FONTS.body,
-    color: COLORS.text.muted,
+    marginTop: 24,
+    marginBottom: 16,
+    letterSpacing: 0.5,
   },
   dateGroup: {
     marginBottom: 20,

@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
 import { User, Settings, LogOut, ChevronRight } from 'lucide-react-native';
 import { useAuth } from '../../hooks/useAuth';
 import { useUserStore } from '../../stores/useUserStore';
-import { databases } from '../../lib/appwrite';
-import { Query } from 'react-native-appwrite';
+import { useAnalytics } from '../../hooks/useAnalytics';
 import { COLORS, FONTS } from '../../theme';
 import ActivityGraph from '../../components/ui/ActivityGraph';
 
@@ -13,52 +12,16 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { logout } = useAuth();
   const { user } = useUserStore();
-  const [contributionData, setContributionData] = useState<Array<{ date: string; count: number }>>([]);
+  const { data: analytics, loading: analyticsLoading } = useAnalytics();
 
-  useEffect(() => {
-    if (user) {
-      fetchActivityData();
-    }
-  }, [user]);
-
-  const fetchActivityData = async () => {
-    if (!user) return;
-
-    try {
-      // Fetch user's responses for the last 105 days (15 weeks)
-      const endDate = new Date();
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - 105);
-
-      const responsesRes = await databases.listDocuments(
-        'synapse',
-        'responses',
-        [
-          Query.equal('userID', user.$id),
-          Query.greaterThanEqual('$createdAt', startDate.toISOString()),
-          Query.limit(500),
-        ]
-      );
-
-      // Group responses by date
-      const dateCountMap: Record<string, number> = {};
-      responsesRes.documents.forEach((doc: any) => {
-        const date = new Date(doc.$createdAt || doc.completedAt).toISOString().split('T')[0];
-        dateCountMap[date] = (dateCountMap[date] || 0) + 1;
-      });
-
-      // Convert to array format for ContributionGraph
-      const data = Object.entries(dateCountMap).map(([date, count]) => ({
-        date,
-        count,
-      }));
-
-      setContributionData(data);
-    } catch (error) {
-      console.error('Error fetching activity data:', error);
-      setContributionData([]);
-    }
-  };
+  // Convert activityCalendar to format needed by ActivityGraph
+  const contributionData = useMemo(() => {
+    if (!analytics?.activityCalendar) return [];
+    return Object.entries(analytics.activityCalendar).map(([date, count]) => ({
+      date,
+      count,
+    }));
+  }, [analytics?.activityCalendar]);
 
   const handleLogout = async () => {
     await logout();
@@ -113,7 +76,7 @@ export default function ProfileScreen() {
           {/* Contribution Graph */}
           <View style={styles.contributionSection}>
             <Text style={styles.sectionTitle}>Activity</Text>
-            <ActivityGraph data={contributionData} numWeeks={15} />
+            <ActivityGraph data={contributionData} weeks={15} />
           </View>
 
           {/* Menu Sections */}
