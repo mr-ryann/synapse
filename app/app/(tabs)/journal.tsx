@@ -124,16 +124,20 @@ export default function JournalScreen() {
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    
+    // Reset time to midnight for accurate day comparison
+    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const nowOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffDays = Math.floor((nowOnly.getTime() - dateOnly.getTime()) / (1000 * 60 * 60 * 24));
 
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
     
+    // Show actual date in "Month Day, Year" format
     return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+      month: 'long', 
       day: 'numeric',
-      year: date.getFullYear() !== now.getFullYear() ? 'numeric' : undefined,
+      year: 'numeric',
     });
   };
 
@@ -165,6 +169,11 @@ export default function JournalScreen() {
     groups[date].push(entry);
     return groups;
   }, {} as Record<string, JournalEntry[]>);
+
+  // Sort grouped entries by date (most recent first)
+  const sortedGroupedEntries = Object.entries(groupedEntries).sort(([dateA], [dateB]) => {
+    return new Date(dateB).getTime() - new Date(dateA).getTime();
+  });
 
   if (loading) {
     return (
@@ -214,7 +223,7 @@ export default function JournalScreen() {
               {/* Vertical timeline line */}
               <View style={styles.timelineLine} />
               
-              {Object.entries(groupedEntries).map(([dateStr, dayEntries], groupIndex) => (
+              {sortedGroupedEntries.map(([dateStr, dayEntries], groupIndex) => (
                 <View key={dateStr} style={styles.dateGroup}>
                   {/* Date marker on timeline */}
                   <View style={styles.dateMarker}>

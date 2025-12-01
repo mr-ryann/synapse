@@ -40,7 +40,7 @@ export const TopHeader = React.memo(() => {
           <View style={styles.rightSide}>
             <StreakIndicator />
             <Pressable onPress={() => setShowSearch(true)} style={styles.searchButton}>
-              <Search size={22} color={COLORS.text.primary} />
+              <Search size={24} color={COLORS.text.primary} />
             </Pressable>
           </View>
         </View>
@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    gap: 4,
+    gap: 0,
   },
   searchButton: {
     padding: 8,
